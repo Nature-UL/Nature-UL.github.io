@@ -1,351 +1,833 @@
-<html>
+<!doctype html>
+<html lang="zh-CN">
 <head>
-    <title>Green</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-        }
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>2048（可选 4×4 / 5×5 / 6×6）</title>
+  <style>
+    :root{
+      --bg1:#0b1220;
+      --bg2:#101b33;
 
-        .container {
-            width: 480px;
-            position: relative;
-        }
+      --card: rgba(255,255,255,.10);
+      --card2: rgba(255,255,255,.14);
+      --stroke: rgba(255,255,255,.22);
 
-        .grid-container {
-            display: grid;
-            grid-template-columns: repeat(4, 100px);
-            grid-gap: 15px;
-            background-color: #bbada0;
-            padding: 15px;
-            border-radius: 10px;
-            position: relative;
-        }
+      --text: rgba(255,255,255,.92);
+      --sub: rgba(255,255,255,.70);
 
-        .tile {
-            width: 100px;
-            height: 100px;
-            background: #b4cdb5;
-            border-radius: 3px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 30px;
-            font-weight: bold;
-            color: #657765;
-        }
+      --shadow: 0 18px 50px rgba(0,0,0,.45);
+      --radius: 18px;
 
-        .tile-2 {
-            background: #e5eeda;
-        }
+      --gap: 10px;       /* 棋盘格子间距 */
+      --size: 4;         /* 当前布局大小（JS 会同步设置） */
+      --cell: 80px;      /* 单格尺寸（JS 会计算并写入） */
+    }
 
-        .tile-4 {
-            background: #ede0c8;
-        }
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(1200px 800px at 20% 15%, rgba(99,102,241,.35), transparent 55%),
+        radial-gradient(900px 700px at 85% 25%, rgba(34,211,238,.22), transparent 60%),
+        radial-gradient(1000px 900px at 50% 95%, rgba(16,185,129,.18), transparent 55%),
+        linear-gradient(160deg, var(--bg1), var(--bg2));
+      overflow-x:hidden;
+    }
 
-        .tile-8 {
-            background: #79f2a1;
-            color: #f9f6f2;
-        }
+    .safe{
+      min-height:100%;
+      padding:
+        calc(16px + env(safe-area-inset-top))
+        calc(16px + env(safe-area-inset-right))
+        calc(18px + env(safe-area-inset-bottom))
+        calc(16px + env(safe-area-inset-left));
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
 
-        /* Additional tile styles for 16, 32, 64, etc. go here */
+    .app{
+      width: min(1080px, 100%);
+      display:flex;
+      flex-direction:column;
+      gap: 14px;
+    }
 
-        .game-message {
-            width: 500px;
-            text-align: center;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            display: none;
-        }
+    .topbar{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap: 12px;
+      padding: 4px 2px;
+      flex-wrap:wrap;
+    }
+    .title{
+      margin:0;
+      line-height:1.2;
+      font-size: clamp(18px, 2.2vw, 22px);
+      letter-spacing:.2px;
+    }
+    .sub{
+      margin:0;
+      font-size: 12px;
+      color: var(--sub);
+    }
 
-        .game-message p {
-            font-size: 36px;
-            font-weight: bold;
-            color: #776e65;
-        }
+    .panel{
+      border: 1px solid var(--stroke);
+      background: linear-gradient(135deg, var(--card), rgba(255,255,255,.06));
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      overflow:hidden;
+    }
 
-        .game-message .button {
-            background: #668f66;
-            color: #f9f6f2;
-            border: none;
-            padding: 10px 20px;
-            font-size: 18px;
-            cursor: pointer;
-            margin-top: 20px;
-        }
+    .content{
+      display:grid;
+      grid-template-columns: 1fr 320px;
+      gap: 14px;
+      align-items:stretch;
+    }
 
-        .game-message a {
-            color: inherit;
-            text-decoration: none;
-        }
-    </style>
+    @media (max-width: 860px){
+      .content{
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .leftWrap{
+      padding: 14px;
+      display:flex;
+      flex-direction:column;
+      gap: 12px;
+    }
+
+    .rightWrap{
+      padding: 14px;
+      display:flex;
+      flex-direction:column;
+      gap: 12px;
+    }
+
+    .row{
+      display:flex;
+      gap: 10px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+
+    .chip{
+      display:flex;
+      align-items:center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.08);
+      min-height: 44px;
+    }
+    .chip b{
+      font-size: 12px;
+      color: var(--sub);
+      font-weight: 650;
+      letter-spacing:.2px;
+    }
+    .chip span{
+      font-size: 16px;
+      font-weight: 750;
+      letter-spacing:.2px;
+    }
+
+    .select, .btn{
+      appearance:none;
+      border: 1px solid rgba(255,255,255,.20);
+      background: rgba(255,255,255,.08);
+      color: var(--text);
+      border-radius: 14px;
+      padding: 10px 12px;
+      min-height: 44px;
+      outline:none;
+      transition: transform .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .select{
+      padding-right: 36px;
+      background-image:
+        linear-gradient(45deg, transparent 50%, rgba(255,255,255,.8) 50%),
+        linear-gradient(135deg, rgba(255,255,255,.8) 50%, transparent 50%);
+      background-position:
+        calc(100% - 18px) 18px,
+        calc(100% - 12px) 18px;
+      background-size: 6px 6px, 6px 6px;
+      background-repeat: no-repeat;
+    }
+
+    .btn{
+      cursor:pointer;
+      font-weight: 650;
+      letter-spacing:.2px;
+    }
+    .btn:hover{
+      transform: translateY(-1px);
+      border-color: rgba(255,255,255,.34);
+      background: rgba(255,255,255,.10);
+      box-shadow: 0 14px 34px rgba(0,0,0,.28);
+    }
+    .btn:active{
+      transform: translateY(0px) scale(.99);
+    }
+    .btn:focus-visible, .select:focus-visible{
+      border-color: rgba(255,255,255,.55);
+      box-shadow: 0 0 0 4px rgba(99,102,241,.28);
+    }
+
+    /* ===== 棋盘 ===== */
+    .boardShell{
+      position:relative;
+      width: min(520px, 100%);
+      margin: 0 auto;
+    }
+    .board{
+      position:relative;
+      width:100%;
+      aspect-ratio: 1 / 1;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.06);
+      overflow:hidden;
+      box-shadow: 0 16px 44px rgba(0,0,0,.40);
+    }
+
+    .gridBg{
+      position:absolute;
+      inset: 12px;
+      display:grid;
+      grid-template-columns: repeat(var(--size), 1fr);
+      grid-template-rows: repeat(var(--size), 1fr);
+      gap: var(--gap);
+      z-index: 1;
+    }
+    .cell{
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+    }
+
+    .tiles{
+      position:absolute;
+      inset: 12px;
+      z-index: 2;
+      pointer-events:none;
+    }
+    .tile{
+      position:absolute;
+      width: var(--cell);
+      height: var(--cell);
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.10);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight: 850;
+      letter-spacing:.3px;
+      box-shadow: 0 10px 24px rgba(0,0,0,.25);
+      transform: translate(var(--x), var(--y));
+      transition: transform 120ms ease, opacity 120ms ease;
+      overflow:hidden;
+    }
+    .tile::before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background:
+        radial-gradient(600px 140px at 10% 0%, rgba(255,255,255,.20), transparent 60%),
+        radial-gradient(420px 220px at 100% 0%, rgba(255,255,255,.12), transparent 60%);
+      opacity:.9;
+      pointer-events:none;
+    }
+    .tile .n{
+      position:relative;
+      z-index: 1;
+      font-size: clamp(18px, 3.6vw, 34px);
+      text-shadow: 0 8px 16px rgba(0,0,0,.35);
+    }
+    /* 大数字缩小一点 */
+    .tile[data-digits="4"] .n{ font-size: clamp(16px, 3.0vw, 28px); }
+    .tile[data-digits="5"] .n{ font-size: clamp(14px, 2.6vw, 22px); }
+
+    /* 基于数值的“彩色玻璃” */
+    .tile[data-v="2"]   { background: linear-gradient(135deg, rgba(99,102,241,.30), rgba(255,255,255,.08)); }
+    .tile[data-v="4"]   { background: linear-gradient(135deg, rgba(34,211,238,.28), rgba(255,255,255,.08)); }
+    .tile[data-v="8"]   { background: linear-gradient(135deg, rgba(16,185,129,.30), rgba(255,255,255,.08)); }
+    .tile[data-v="16"]  { background: linear-gradient(135deg, rgba(251,146,60,.30), rgba(255,255,255,.08)); }
+    .tile[data-v="32"]  { background: linear-gradient(135deg, rgba(244,63,94,.30), rgba(255,255,255,.08)); }
+    .tile[data-v="64"]  { background: linear-gradient(135deg, rgba(168,85,247,.30), rgba(255,255,255,.08)); }
+    .tile[data-v="128"] { background: linear-gradient(135deg, rgba(99,102,241,.34), rgba(34,211,238,.16)); }
+    .tile[data-v="256"] { background: linear-gradient(135deg, rgba(34,211,238,.34), rgba(16,185,129,.16)); }
+    .tile[data-v="512"] { background: linear-gradient(135deg, rgba(16,185,129,.34), rgba(251,146,60,.16)); }
+    .tile[data-v="1024"]{ background: linear-gradient(135deg, rgba(251,146,60,.34), rgba(244,63,94,.16)); }
+    .tile[data-v="2048"]{ background: linear-gradient(135deg, rgba(168,85,247,.34), rgba(99,102,241,.16)); }
+
+    /* 新生成/合并动画（轻量） */
+    @keyframes pop {
+      0% { transform: translate(var(--x), var(--y)) scale(.92); opacity: .0; }
+      100% { transform: translate(var(--x), var(--y)) scale(1); opacity: 1; }
+    }
+    .tile.pop{
+      animation: pop 120ms ease-out;
+    }
+
+    /* 覆盖提示层 */
+    .overlay{
+      position:absolute;
+      inset:0;
+      z-index:3;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      background: rgba(0,0,0,.35);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .overlay.show{ display:flex; }
+    .overlayCard{
+      width: min(420px, 100%);
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.22);
+      background: linear-gradient(135deg, rgba(255,255,255,.14), rgba(255,255,255,.06));
+      box-shadow: 0 22px 70px rgba(0,0,0,.55);
+      padding: 14px;
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+    }
+    .overlayCard h3{
+      margin: 0;
+      font-size: 16px;
+      letter-spacing:.2px;
+    }
+    .overlayCard p{
+      margin: 0;
+      font-size: 12.5px;
+      color: var(--sub);
+      line-height:1.4;
+    }
+    .overlayActions{
+      display:flex;
+      gap: 10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      margin-top: 4px;
+    }
+
+    /* ===== 方向按钮（旁边的 D-pad） ===== */
+    .dpad{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-rows: 1fr 1fr 1fr;
+      gap: 10px;
+      align-items:stretch;
+      justify-items:stretch;
+      user-select:none;
+    }
+    .dpad .spacer{ visibility:hidden; }
+    .dpadBtn{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-height: 54px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.20);
+      background: rgba(255,255,255,.08);
+      cursor:pointer;
+      transition: transform .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .dpadBtn:hover{
+      transform: translateY(-1px);
+      border-color: rgba(255,255,255,.34);
+      background: rgba(255,255,255,.10);
+      box-shadow: 0 14px 34px rgba(0,0,0,.28);
+    }
+    .dpadBtn:active{ transform: translateY(0px) scale(.99); }
+    .dpadBtn svg{
+      width: 20px;
+      height: 20px;
+      fill:none;
+      stroke: rgba(255,255,255,.92);
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .help{
+      font-size: 12.5px;
+      color: var(--sub);
+      line-height:1.45;
+    }
+
+    @media (prefers-reduced-motion: reduce){
+      .tile, .btn, .dpadBtn { transition:none !important; }
+      .tile.pop{ animation:none !important; }
+    }
+  </style>
 </head>
+
 <body>
-    <div class="container">
-        <div class="grid-container" id="grid-container">
-            <!-- Tiles will be generated here -->
+  <div class="safe">
+    <div class="app">
+      <div class="topbar">
+        <div>
+          <h1 class="title">2048</h1>
+          <p class="sub">键盘方向键/WASD 或右侧方向按钮操作；支持 4×4 / 5×5 / 6×6。</p>
         </div>
-        <div class="game-message" id="game-message">
-            <p>Game Over!</p>
-            <button class="button" onclick="setup()">Try again</button>
+        <div class="row">
+          <label class="chip" title="选择棋盘大小">
+            <b>布局</b>
+            <select id="sizeSel" class="select" aria-label="布局选择">
+              <option value="4">4 × 4</option>
+              <option value="5">5 × 5</option>
+              <option value="6">6 × 6</option>
+            </select>
+          </label>
+          <button id="newBtn" class="btn">新游戏</button>
         </div>
+      </div>
+
+      <div class="content">
+        <div class="panel leftWrap">
+          <div class="row">
+            <div class="chip"><b>得分</b><span id="score">0</span></div>
+            <div class="chip"><b>最高</b><span id="best">0</span></div>
+          </div>
+
+          <div class="boardShell">
+            <div class="board" id="board" aria-label="2048 棋盘" role="application">
+              <div class="gridBg" id="gridBg"></div>
+              <div class="tiles" id="tiles"></div>
+
+              <div class="overlay" id="overlay">
+                <div class="overlayCard">
+                  <h3 id="ovTitle">游戏结束</h3>
+                  <p id="ovText">没有可移动的空间了。</p>
+                  <div class="overlayActions">
+                    <button class="btn" id="keepBtn">继续</button>
+                    <button class="btn" id="retryBtn">再来一局</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="help">
+            ^_^
+          </div>
+        </div>
+
+        <div class="panel rightWrap">
+          <div class="row">
+            <div class="chip" style="flex:1 1 auto;">
+              <b>目标</b>
+              <span id="targetText">2048</span>
+            </div>
+          </div>
+
+          <div class="dpad" aria-label="方向控制">
+            <div class="spacer"> </div>
+            <button class="dpadBtn" id="upBtn" aria-label="上">
+              <svg viewBox="0 0 24 24"><path d="M12 5l-7 7"></path><path d="M12 5l7 7"></path><path d="M12 5v14"></path></svg>
+            </button>
+            <div class="spacer"> </div>
+
+            <button class="dpadBtn" id="leftBtn" aria-label="左">
+              <svg viewBox="0 0 24 24"><path d="M5 12l7-7"></path><path d="M5 12l7 7"></path><path d="M5 12h14"></path></svg>
+            </button>
+            <div class="spacer"> </div>
+            <button class="dpadBtn" id="rightBtn" aria-label="右">
+              <svg viewBox="0 0 24 24"><path d="M19 12l-7-7"></path><path d="M19 12l-7 7"></path><path d="M19 12H5"></path></svg>
+            </button>
+
+            <div class="spacer"> </div>
+            <button class="dpadBtn" id="downBtn" aria-label="下">
+              <svg viewBox="0 0 24 24"><path d="M12 19l-7-7"></path><path d="M12 19l7-7"></path><path d="M12 5v14"></path></svg>
+            </button>
+            <div class="spacer"> </div>
+          </div>
+
+          <div class="row">
+            <button class="btn" id="hintBtn" style="width:100%;">操作说明</button>
+          </div>
+
+          <div class="help" id="helpText">
+            <b>键盘：</b>方向键 或 WASD。<br/>
+            <b>合并规则：</b>同一移动中每个格子只参与一次合并。<br/>
+            <b>胜利：</b>出现 ≥ 2048 的数字（继续也可玩）。
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
 
-    <script>
-        // Logic for the 2048 game
-        var grid, score, gameOver;
+  <script>
+    // =========================
+    // 2048 核心逻辑（支持 N×N）
+    // =========================
+    const TARGET = 2048;
 
-        function setup() {
-            grid = [[0, 0, 0, 0],
-                    [0, 0, 0, 0],
-                    [0, 0, 0, 0],
-                    [0, 0, 0, 0]];
-            score = 0;
-            gameOver = false;
-            addNumber();
-            addNumber();
-            updateView();
-            document.getElementById('game-message').style.display = 'none';
+    const els = {
+      sizeSel: document.getElementById("sizeSel"),
+      newBtn: document.getElementById("newBtn"),
+      score: document.getElementById("score"),
+      best: document.getElementById("best"),
+      targetText: document.getElementById("targetText"),
+      board: document.getElementById("board"),
+      gridBg: document.getElementById("gridBg"),
+      tiles: document.getElementById("tiles"),
+
+      overlay: document.getElementById("overlay"),
+      ovTitle: document.getElementById("ovTitle"),
+      ovText: document.getElementById("ovText"),
+      keepBtn: document.getElementById("keepBtn"),
+      retryBtn: document.getElementById("retryBtn"),
+
+      upBtn: document.getElementById("upBtn"),
+      downBtn: document.getElementById("downBtn"),
+      leftBtn: document.getElementById("leftBtn"),
+      rightBtn: document.getElementById("rightBtn"),
+
+      hintBtn: document.getElementById("hintBtn"),
+      helpText: document.getElementById("helpText"),
+    };
+
+    let size = 4;
+    let board = [];
+    let score = 0;
+    let best = 0;
+    let wonShown = false;
+
+    const rand = (n) => Math.floor(Math.random() * n);
+
+    function bestKey(n){ return `best_2048_${n}`; }
+
+    function loadBest(n){
+      const v = Number(localStorage.getItem(bestKey(n)) || "0");
+      return Number.isFinite(v) ? v : 0;
+    }
+    function saveBest(n, v){
+      localStorage.setItem(bestKey(n), String(v));
+    }
+
+    function setSize(n){
+      size = n;
+      document.documentElement.style.setProperty("--size", String(size));
+      best = loadBest(size);
+      updateHUD();
+      buildGridBackground();
+      initGame();
+      requestAnimationFrame(updateSizing);
+    }
+
+    function initGame(){
+      board = Array.from({length: size}, () => Array(size).fill(0));
+      score = 0;
+      wonShown = false;
+      hideOverlay();
+      spawnTile();
+      spawnTile();
+      render(true);
+      updateHUD();
+    }
+
+    function emptyCells(){
+      const cells = [];
+      for (let r=0; r<size; r++){
+        for (let c=0; c<size; c++){
+          if (board[r][c] === 0) cells.push([r,c]);
         }
+      }
+      return cells;
+    }
 
-        function addNumber() {
-            var options = [];
-            for (var i = 0; i < 4; i++) {
-                for (var j = 0; j < 4; j++) {
-                    if (grid[i][j] === 0) {
-                        options.push({
-                            x: i,
-                            y: j
-                        });
-                    }
-                }
-            }
-            if (options.length > 0) {
-                var spot = options[Math.floor(Math.random() * options.length)];
-                var randomNumber = Math.random() > 0.5 ? 2 : 4;
-                grid[spot.x][spot.y] = randomNumber;
-            }
+    function spawnTile(){
+      const empties = emptyCells();
+      if (!empties.length) return false;
+      const [r,c] = empties[rand(empties.length)];
+      board[r][c] = Math.random() < 0.9 ? 2 : 4;
+      return {r,c};
+    }
+
+    function linesFor(dir){
+      // 返回每条“线”的坐标序列（从移动方向的起点到终点）
+      const lines = [];
+      if (dir === "left" || dir === "right"){
+        for (let r=0; r<size; r++){
+          const line = [];
+          for (let c=0; c<size; c++){
+            const cc = (dir === "left") ? c : (size - 1 - c);
+            line.push([r, cc]);
+          }
+          lines.push(line);
         }
-
-        function updateView() {
-            var container = document.getElementById('grid-container');
-            container.innerHTML = '';
-            for (var i = 0; i < 4; i++) {
-                for (var j = 0; j < 4; j++) {
-                    var tile = document.createElement('div');
-                    tile.classList.add('tile');
-                    var value = grid[i][j];
-                    if (value > 0) {
-                        tile.textContent = value;
-                        tile.classList.add('tile-' + value);
-                    }
-                    container.appendChild(tile);
-                }
-            }
+      } else {
+        for (let c=0; c<size; c++){
+          const line = [];
+          for (let r=0; r<size; r++){
+            const rr = (dir === "up") ? r : (size - 1 - r);
+            line.push([rr, c]);
+          }
+          lines.push(line);
         }
+      }
+      return lines;
+    }
 
-        function copyGrid(grid) {
-            var extra = [[0, 0, 0, 0],
-                         [0, 0, 0, 0],
-                         [0, 0, 0, 0],
-                         [0, 0, 0, 0]];
-            for (var i = 0; i < 4; i++) {
-                for (var j = 0; j < 4; j++) {
-                    extra[i][j] = grid[i][j];
-                }
-            }
-            return extra;
+    function collapse(values){
+      // 2048 合并：去零 -> 相邻相等合并一次 -> 补零
+      const v = values.filter(x => x !== 0);
+      let gained = 0;
+      for (let i=0; i<v.length-1; i++){
+        if (v[i] !== 0 && v[i] === v[i+1]){
+          v[i] *= 2;
+          gained += v[i];
+          v[i+1] = 0;
+          i++; // 跳过下一个，确保单次移动只合并一次
         }
+      }
+      const merged = v.filter(x => x !== 0);
+      while (merged.length < size) merged.push(0);
+      return { merged, gained };
+    }
 
-        function compare(a, b) {
-            for (var i = 0; i < 4; i++) {
-                for (var j = 0; j < 4; j++) {
-                    if (a[i][j] !== b[i][j]) {
-                        return true;
-                    }
-                }
-            }
-            return false;
+    function move(dir){
+      if (els.overlay.classList.contains("show")) return;
+
+      let changed = false;
+      let gainedTotal = 0;
+
+      const lines = linesFor(dir);
+      for (const line of lines){
+        const before = line.map(([r,c]) => board[r][c]);
+        const { merged, gained } = collapse(before);
+        gainedTotal += gained;
+
+        for (let i=0; i<line.length; i++){
+          const [r,c] = line[i];
+          if (board[r][c] !== merged[i]) changed = true;
+          board[r][c] = merged[i];
         }
+      }
 
-        function slide(row) {
-            var arr = row.filter(val => val);
-            var missing = 4 - arr.length;
-            var zeros = Array(missing).fill(0);
-            arr = zeros.concat(arr);
-            return arr;
+      if (!changed) return;
+
+      score += gainedTotal;
+      if (score > best){
+        best = score;
+        saveBest(size, best);
+      }
+
+      const spawned = spawnTile();
+      render(spawned); // 标记新生成的 tile 做 pop 动画
+      updateHUD();
+
+      const maxTile = maxValue();
+      if (!wonShown && maxTile >= TARGET){
+        wonShown = true;
+        showOverlay("已达成目标", `你已合成 ≥ ${TARGET} 的数字。可以继续挑战更高分。`, false);
+      } else if (isGameOver()){
+        showOverlay("游戏结束", "没有可移动的空间了。", true);
+      }
+    }
+
+    function maxValue(){
+      let m = 0;
+      for (let r=0; r<size; r++){
+        for (let c=0; c<size; c++){
+          m = Math.max(m, board[r][c]);
         }
+      }
+      return m;
+    }
 
-        function combine(row) {
-            for (var i = 3; i >= 1; i--) {
-                var a = row[i];
-                var b = row[i - 1];
-                if (a == b) {
-                    row[i] = a + b;
-                    score += row[i];
-                    row[i - 1] = 0;
-                }
-            }
-            return row;
+    function isGameOver(){
+      if (emptyCells().length) return false;
+      for (let r=0; r<size; r++){
+        for (let c=0; c<size; c++){
+          const v = board[r][c];
+          if ((r+1<size && board[r+1][c] === v) || (c+1<size && board[r][c+1] === v)) return false;
         }
+      }
+      return true;
+    }
 
-        function operate(row) {
-            row = slide(row);
-            row = combine(row);
-            row = slide(row);
-            return row;
+    // =========================
+    // 渲染与布局
+    // =========================
+    function buildGridBackground(){
+      els.gridBg.innerHTML = "";
+      const total = size * size;
+      for (let i=0; i<total; i++){
+        const d = document.createElement("div");
+        d.className = "cell";
+        els.gridBg.appendChild(d);
+      }
+    }
+
+    function updateSizing(){
+      // 根据棋盘可用宽度计算 cell 尺寸
+      const rect = els.tiles.getBoundingClientRect();
+      const gap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--gap")) || 10;
+      const cell = (rect.width - gap*(size-1)) / size;
+      document.documentElement.style.setProperty("--cell", `${cell}px`);
+      render(false); // 仅为重新定位
+    }
+
+    function render(spawned){
+      // spawned: {r,c} 或 false/undefined
+      els.tiles.innerHTML = "";
+
+      const gap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--gap")) || 10;
+      const cell = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--cell")) || 80;
+
+      for (let r=0; r<size; r++){
+        for (let c=0; c<size; c++){
+          const v = board[r][c];
+          if (!v) continue;
+
+          const tile = document.createElement("div");
+          tile.className = "tile";
+          tile.dataset.v = String(v);
+
+          const digits = String(v).length;
+          tile.dataset.digits = String(digits);
+
+          const x = c * (cell + gap);
+          const y = r * (cell + gap);
+          tile.style.setProperty("--x", `${x}px`);
+          tile.style.setProperty("--y", `${y}px`);
+
+          const n = document.createElement("div");
+          n.className = "n";
+          n.textContent = String(v);
+          tile.appendChild(n);
+
+          if (spawned && spawned.r === r && spawned.c === c) tile.classList.add("pop");
+
+          els.tiles.appendChild(tile);
         }
+      }
+    }
 
-        function flipGrid(grid) {
-            for (var i = 0; i < 4; i++) {
-                grid[i].reverse();
-            }
-            return grid;
-        }
+    function updateHUD(){
+      els.score.textContent = String(score);
+      els.best.textContent = String(best);
+      els.targetText.textContent = String(TARGET);
+    }
 
-        function rotateGrid(grid) {
-            var newGrid = [[0, 0, 0, 0],
-                           [0, 0, 0, 0],
-                           [0, 0, 0, 0],
-                           [0, 0, 0, 0]];
-            for (var i = 0; i < 4; i++) {
-                for (var j = 0; j < 4; j++) {
-                    newGrid[i][j] = grid[j][i];
-                }
-            }
-            return newGrid;
-        }
+    // =========================
+    // 覆盖层提示
+    // =========================
+    function showOverlay(title, text, showRetry){
+      els.ovTitle.textContent = title;
+      els.ovText.textContent = text;
+      els.overlay.classList.add("show");
+      els.retryBtn.style.display = showRetry ? "" : "";
+      // “继续”永远显示，便于关闭提示
+    }
+    function hideOverlay(){
+      els.overlay.classList.remove("show");
+    }
 
-        function isGameOver() {
-            for (var i = 0; i < 4; i++) {
-                for (var j = 0; j < 4; j++) {
-                    if (grid[i][j] == 0) {
-                        return false;
-                    }
-                    if (j !== 3 && grid[i][j] === grid[i][j + 1]) {
-                        return false;
-                    }
-                    if (i !== 3 && grid[i][j] === grid[i + 1][j]) {
-                        return false;
-                    }
-                }
-            }
-            return true;
-        }
+    // =========================
+    // 交互：键盘、按钮、简单滑动
+    // =========================
+    function onKeyDown(e){
+      const k = e.key;
+      const map = {
+        ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right",
+        w: "up", s: "down", a: "left", d: "right",
+        W: "up", S: "down", A: "left", D: "right",
+      };
+      if (map[k]){
+        e.preventDefault();
+        move(map[k]);
+      }
+      if (k === "Escape" && els.overlay.classList.contains("show")){
+        hideOverlay();
+      }
+    }
 
-        function checkGameOver() {
-            if (isGameOver()) {
-                document.getElementById('game-message').style.display = 'block';
-                gameOver = true;
-            }
-        }
+    // 可选：手机上轻量滑动支持（不影响按钮）
+    let touchStart = null;
+    function onTouchStart(e){
+      if (!e.touches || !e.touches.length) return;
+      const t = e.touches[0];
+      touchStart = { x: t.clientX, y: t.clientY, time: Date.now() };
+    }
+    function onTouchEnd(e){
+      if (!touchStart) return;
+      const t = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0] : null;
+      if (!t) return;
 
-        function keyPressed(event) {
-            if (gameOver) {
-                return;
-            }
-            var flipped = false;
-            var rotated = false;
-            var played = true;
-            switch(event.keyCode) {
-                case 39: // Right
-                    // No action needed
-                    break;
-                case 40: // Down
-                    grid = rotateGrid(grid);
-                    rotated = true;
-                    break;
-                case 37: // Left
-                    grid = flipGrid(grid);
-                    flipped = true;
-                    break;
-                case 38: // Up
-                    grid = rotateGrid(grid);
-                    rotated = true;
-                    flipped = true;
-                    break;
-                default:
-                    played = false;
-            }
+      const dx = t.clientX - touchStart.x;
+      const dy = t.clientY - touchStart.y;
+      const adx = Math.abs(dx), ady = Math.abs(dy);
 
-            if (played) {
-                var past = copyGrid(grid);
-                for (var i = 0; i < 4; i++) {
-                    grid[i] = operate(grid[i]);
-                }
-                var changed = compare(past, grid);
-                if (flipped) {
-                    grid = flipGrid(grid);
-                }
-                if (rotated) {
-                    grid = rotateGrid(grid);
-                    grid = rotateGrid(grid);
-                    grid = rotateGrid(grid);
-                }
-                if (changed) {
-                    addNumber();
-                }
-                updateView();
-                checkGameOver();
-            }
-        }
+      // 阈值：避免误触
+      const threshold = 28;
+      if (Math.max(adx, ady) < threshold) return;
 
-        document.addEventListener('keydown', keyPressed);
+      if (adx > ady){
+        move(dx > 0 ? "right" : "left");
+      } else {
+        move(dy > 0 ? "down" : "up");
+      }
+      touchStart = null;
+    }
 
-        // Variables to track touch start positions
-        var touchStartX = null;
-        var touchStartY = null;
+    // =========================
+    // 绑定事件
+    // =========================
+    els.sizeSel.addEventListener("change", () => setSize(Number(els.sizeSel.value)));
+    els.newBtn.addEventListener("click", initGame);
 
-        // Event listener for touch start
-        document.addEventListener('touchstart', function(event) {
-            if (event.touches.length > 1) return; // Only single touch events
+    els.upBtn.addEventListener("click", () => move("up"));
+    els.downBtn.addEventListener("click", () => move("down"));
+    els.leftBtn.addEventListener("click", () => move("left"));
+    els.rightBtn.addEventListener("click", () => move("right"));
 
-            touchStartX = event.touches[0].clientX;
-            touchStartY = event.touches[0].clientY;
-            event.preventDefault(); // Prevent scrolling when inside DIV
-        }, { passive: false });
+    els.keepBtn.addEventListener("click", hideOverlay);
+    els.retryBtn.addEventListener("click", initGame);
 
-        // Event listener for touch move
-        document.addEventListener('touchmove', function(event) {
-            event.preventDefault(); // Prevent scrolling when inside DIV
-        }, { passive: false });
+    els.hintBtn.addEventListener("click", () => {
+      showOverlay("操作说明",
+        "键盘：方向键/WASD；按钮：右侧方向键；手机：也可在棋盘区域滑动。合并规则：同一移动中每格只合并一次。",
+        false
+      );
+    });
 
-        // Event listener for touch end
-        document.addEventListener('touchend', function(event) {
-            if (!touchStartX || !touchStartY || gameOver) return;
+    window.addEventListener("keydown", onKeyDown, { passive: false });
+    window.addEventListener("resize", () => requestAnimationFrame(updateSizing));
 
-            var deltaX = event.changedTouches[0].clientX - touchStartX;
-            var deltaY = event.changedTouches[0].clientY - touchStartY;
+    // 将滑动绑定在棋盘上
+    els.board.addEventListener("touchstart", onTouchStart, { passive: true });
+    els.board.addEventListener("touchend", onTouchEnd, { passive: true });
 
-            // Determine swipe direction
-            if (Math.abs(deltaX) > Math.abs(deltaY)) { // Horizontal swipe
-                if (deltaX > 0) {
-                    moveRight();
-                } else {
-                    moveLeft();
-                }
-            } else { // Vertical swipe
-                if (deltaY > 0) {
-                    moveDown();
-                } else {
-                    moveUp();
-                }
-            }
-
-            touchStartX = null;
-            touchStartY = null;
-        });
-
-        // Move functions
-        function moveLeft() { keyPressed({ keyCode: 37 }); }
-        function moveUp() { keyPressed({ keyCode: 38 }); }
-        function moveRight() { keyPressed({ keyCode: 39 }); }
-        function moveDown() { keyPressed({ keyCode: 40 }); }
-
-        setup();
-    </script>
+    // =========================
+    // 启动
+    // =========================
+    (function boot(){
+      els.sizeSel.value = "4";
+      setSize(4);
+      requestAnimationFrame(updateSizing);
+    })();
+  </script>
 </body>
 </html>
