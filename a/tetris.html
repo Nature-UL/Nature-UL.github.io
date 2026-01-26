@@ -1,0 +1,1009 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>俄罗斯方块 · 毛玻璃风格</title>
+  <style>
+    :root{
+      --bg1:#0b1220;
+      --bg2:#101b33;
+
+      --card: rgba(255,255,255,.10);
+      --card2: rgba(255,255,255,.14);
+      --stroke: rgba(255,255,255,.22);
+
+      --text: rgba(255,255,255,.92);
+      --sub: rgba(255,255,255,.70);
+
+      --shadow: 0 18px 50px rgba(0,0,0,.45);
+      --radius: 18px;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(1200px 800px at 20% 15%, rgba(99,102,241,.35), transparent 55%),
+        radial-gradient(900px 700px at 85% 25%, rgba(34,211,238,.22), transparent 60%),
+        radial-gradient(1000px 900px at 50% 95%, rgba(16,185,129,.18), transparent 55%),
+        linear-gradient(160deg, var(--bg1), var(--bg2));
+      overflow-x:hidden;
+    }
+
+    .safe{
+      min-height:100%;
+      padding:
+        calc(16px + env(safe-area-inset-top))
+        calc(16px + env(safe-area-inset-right))
+        calc(18px + env(safe-area-inset-bottom))
+        calc(16px + env(safe-area-inset-left));
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .app{
+      width: min(1080px, 100%);
+      display:flex;
+      flex-direction:column;
+      gap: 14px;
+    }
+
+    .topbar{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap: 12px;
+      padding: 4px 2px;
+      flex-wrap:wrap;
+    }
+    .title{
+      margin:0;
+      line-height:1.2;
+      font-size: clamp(18px, 2.2vw, 22px);
+      letter-spacing:.2px;
+    }
+    .sub{
+      margin:0;
+      font-size: 12px;
+      color: var(--sub);
+      line-height:1.35;
+      max-width: 72ch;
+    }
+
+    .panel{
+      border: 1px solid var(--stroke);
+      background: linear-gradient(135deg, var(--card), rgba(255,255,255,.06));
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      overflow:hidden;
+    }
+
+    .content{
+      display:grid;
+      grid-template-columns: 1fr 340px;
+      gap: 14px;
+      align-items:stretch;
+    }
+    @media (max-width: 900px){
+      .content{ grid-template-columns: 1fr; }
+    }
+
+    .leftWrap{ padding: 14px; display:flex; flex-direction:column; gap: 12px; }
+    .rightWrap{ padding: 14px; display:flex; flex-direction:column; gap: 12px; }
+
+    .row{
+      display:flex;
+      gap: 10px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+
+    .chip{
+      display:flex;
+      align-items:center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.08);
+      min-height: 44px;
+    }
+    .chip b{
+      font-size: 12px;
+      color: var(--sub);
+      font-weight: 650;
+      letter-spacing:.2px;
+      white-space:nowrap;
+    }
+    .chip span{
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing:.2px;
+    }
+
+    .btn{
+      appearance:none;
+      border: 1px solid rgba(255,255,255,.20);
+      background: rgba(255,255,255,.08);
+      color: var(--text);
+      border-radius: 14px;
+      padding: 10px 12px;
+      min-height: 44px;
+      outline:none;
+      transition: transform .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease;
+      -webkit-tap-highlight-color: transparent;
+      cursor:pointer;
+      font-weight: 650;
+      letter-spacing:.2px;
+    }
+    .btn:hover{
+      transform: translateY(-1px);
+      border-color: rgba(255,255,255,.34);
+      background: rgba(255,255,255,.10);
+      box-shadow: 0 14px 34px rgba(0,0,0,.28);
+    }
+    .btn:active{ transform: translateY(0px) scale(.99); }
+    .btn:focus-visible{
+      border-color: rgba(255,255,255,.55);
+      box-shadow: 0 0 0 4px rgba(99,102,241,.28);
+    }
+
+    /* ====== 游戏画布外壳 ====== */
+    .gameShell{
+      width: min(420px, 100%);
+      margin: 0 auto;
+      position:relative;
+    }
+    .stage{
+      position:relative;
+      width:100%;
+      aspect-ratio: 10 / 20;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.06);
+      box-shadow: 0 16px 44px rgba(0,0,0,.40);
+      overflow:hidden;
+    }
+    canvas{
+      width:100%;
+      height:100%;
+      display:block;
+    }
+
+    /* 覆盖层（暂停/结束） */
+    .overlay{
+      position:absolute;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      background: rgba(0,0,0,.35);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .overlay.show{ display:flex; }
+
+    .overlayCard{
+      width: min(420px, 100%);
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.22);
+      background: linear-gradient(135deg, rgba(255,255,255,.14), rgba(255,255,255,.06));
+      box-shadow: 0 22px 70px rgba(0,0,0,.55);
+      padding: 14px;
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+    }
+    .overlayCard h3{ margin: 0; font-size: 16px; letter-spacing:.2px; }
+    .overlayCard p{ margin: 0; font-size: 12.5px; color: var(--sub); line-height:1.4; }
+    .overlayActions{
+      display:flex;
+      gap: 10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      margin-top: 4px;
+    }
+
+    /* ====== Next 预览 ====== */
+    .previewWrap{
+      display:flex;
+      align-items:flex-start;
+      gap: 10px;
+    }
+    .previewBox{
+      width: 120px;
+      height: 120px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.06);
+      box-shadow: 0 16px 40px rgba(0,0,0,.30);
+      overflow:hidden;
+    }
+    .previewBox canvas{ width:100%; height:100%; }
+    .help{
+      font-size: 12.5px;
+      color: var(--sub);
+      line-height:1.45;
+    }
+
+    /* ====== 侧边按键（移动端也可用） ====== */
+    .controls{
+      display:flex;
+      flex-direction:column;
+      gap: 12px;
+    }
+    .pad{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-rows: 1fr 1fr 1fr;
+      gap: 10px;
+      user-select:none;
+      touch-action: manipulation;
+    }
+    .pad .spacer{ visibility:hidden; }
+
+    .padBtn{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-height: 54px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.20);
+      background: rgba(255,255,255,.08);
+      cursor:pointer;
+      transition: transform .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease;
+      -webkit-tap-highlight-color: transparent;
+      outline:none;
+    }
+    .padBtn:hover{
+      transform: translateY(-1px);
+      border-color: rgba(255,255,255,.34);
+      background: rgba(255,255,255,.10);
+      box-shadow: 0 14px 34px rgba(0,0,0,.28);
+    }
+    .padBtn:active{ transform: translateY(0px) scale(.99); }
+    .padBtn:focus-visible{
+      border-color: rgba(255,255,255,.55);
+      box-shadow: 0 0 0 4px rgba(99,102,241,.28);
+    }
+    .padBtn svg{
+      width: 20px;
+      height: 20px;
+      fill:none;
+      stroke: rgba(255,255,255,.92);
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .bigActions{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .big{
+      min-height: 52px;
+      border-radius: 16px;
+    }
+
+    @media (prefers-reduced-motion: reduce){
+      .btn, .padBtn{ transition:none !important; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="safe">
+    <div class="app">
+      <div class="topbar">
+        <div>
+          <h1 class="title">俄罗斯方块</h1>
+          <p class="sub">
+            键盘：← → 移动，↑/X 旋转，Z 反向旋转，↓ 软降，空格 硬降，P 暂停，R 重开。右侧提供同功能按键。
+          </p>
+        </div>
+        <div class="row">
+          <button class="btn" id="btnPause" type="button">暂停/继续</button>
+          <button class="btn" id="btnRestart" type="button">新游戏</button>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="panel leftWrap">
+          <div class="row">
+            <div class="chip"><b>得分</b><span id="score">0</span></div>
+            <div class="chip"><b>消行</b><span id="lines">0</span></div>
+            <div class="chip"><b>等级</b><span id="level">1</span></div>
+          </div>
+
+          <div class="gameShell">
+            <div class="stage" id="stage" aria-label="俄罗斯方块画面" role="application">
+              <canvas id="game" width="300" height="600"></canvas>
+
+              <div class="overlay" id="overlay">
+                <div class="overlayCard">
+                  <h3 id="ovTitle">暂停</h3>
+                  <p id="ovText">按 P 或点击“暂停/继续”返回。</p>
+                  <div class="overlayActions">
+                    <button class="btn" id="ovResume" type="button">继续</button>
+                    <button class="btn" id="ovRestart" type="button">重开</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="help">
+            
+          </div>
+        </div>
+
+        <div class="panel rightWrap">
+          <div class="previewWrap">
+            <div class="previewBox" aria-label="下一个方块预览">
+              <canvas id="next" width="120" height="120"></canvas>
+            </div>
+            <div class="help">
+              <b>下一个：</b>右侧预览。<br/>
+              <b>硬降：</b>空格 / “硬降”按钮。<br/>
+              <b>软降：</b>按住 ↓ / “下”按钮。
+            </div>
+          </div>
+
+          <div class="controls">
+            <div class="pad" aria-label="方向与旋转控制">
+              <div class="spacer"></div>
+              <button class="padBtn" id="padRotate" type="button" aria-label="旋转">
+                <svg viewBox="0 0 24 24">
+                  <path d="M20 12a8 8 0 1 1-2.34-5.66"></path>
+                  <path d="M20 4v6h-6"></path>
+                </svg>
+              </button>
+              <div class="spacer"></div>
+
+              <button class="padBtn" id="padLeft" type="button" aria-label="左移">
+                <svg viewBox="0 0 24 24">
+                  <path d="M14 6l-6 6 6 6"></path>
+                </svg>
+              </button>
+              <button class="padBtn" id="padDown" type="button" aria-label="下移（软降）">
+                <svg viewBox="0 0 24 24">
+                  <path d="M12 5v14"></path>
+                  <path d="M5 12l7 7 7-7"></path>
+                </svg>
+              </button>
+              <button class="padBtn" id="padRight" type="button" aria-label="右移">
+                <svg viewBox="0 0 24 24">
+                  <path d="M10 6l6 6-6 6"></path>
+                </svg>
+              </button>
+
+              <div class="spacer"></div>
+              <button class="padBtn" id="padHard" type="button" aria-label="硬降">
+                <svg viewBox="0 0 24 24">
+                  <path d="M12 3v10"></path>
+                  <path d="M5 10l7 7 7-7"></path>
+                  <path d="M5 21h14"></path>
+                </svg>
+              </button>
+              <div class="spacer"></div>
+            </div>
+
+            <div class="bigActions">
+              <button class="btn big" id="btnHard" type="button">硬降</button>
+              <button class="btn big" id="btnRotateCCW" type="button">反向旋转</button>
+              <button class="btn big" id="btnPause2" type="button">暂停/继续</button>
+              <button class="btn big" id="btnRestart2" type="button">新游戏</button>
+            </div>
+          </div>
+
+          <div class="help">
+            键位补充：X/↑ 顺时针旋转；Z 逆时针旋转；P 暂停；R 重开。
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================
+    // Tetris Core
+    // =========================
+    const COLS = 10;
+    const ROWS = 20;
+
+    const COLORS = {
+      I: [34, 211, 238],
+      J: [99, 102, 241],
+      L: [251, 146, 60],
+      O: [250, 204, 21],
+      S: [16, 185, 129],
+      T: [168, 85, 247],
+      Z: [244, 63, 94],
+      G: [255, 255, 255], // ghost
+    };
+
+    const SHAPES = {
+      I: [
+        [0,0,0,0],
+        [1,1,1,1],
+        [0,0,0,0],
+        [0,0,0,0],
+      ],
+      J: [
+        [1,0,0],
+        [1,1,1],
+        [0,0,0],
+      ],
+      L: [
+        [0,0,1],
+        [1,1,1],
+        [0,0,0],
+      ],
+      O: [
+        [1,1],
+        [1,1],
+      ],
+      S: [
+        [0,1,1],
+        [1,1,0],
+        [0,0,0],
+      ],
+      T: [
+        [0,1,0],
+        [1,1,1],
+        [0,0,0],
+      ],
+      Z: [
+        [1,1,0],
+        [0,1,1],
+        [0,0,0],
+      ],
+    };
+
+    const gameCanvas = document.getElementById("game");
+    const nextCanvas = document.getElementById("next");
+    const stageEl = document.getElementById("stage");
+
+    const ctx = gameCanvas.getContext("2d");
+    const nctx = nextCanvas.getContext("2d");
+
+    const ui = {
+      score: document.getElementById("score"),
+      lines: document.getElementById("lines"),
+      level: document.getElementById("level"),
+
+      overlay: document.getElementById("overlay"),
+      ovTitle: document.getElementById("ovTitle"),
+      ovText: document.getElementById("ovText"),
+      ovResume: document.getElementById("ovResume"),
+      ovRestart: document.getElementById("ovRestart"),
+
+      btnPause: document.getElementById("btnPause"),
+      btnRestart: document.getElementById("btnRestart"),
+      btnPause2: document.getElementById("btnPause2"),
+      btnRestart2: document.getElementById("btnRestart2"),
+
+      padLeft: document.getElementById("padLeft"),
+      padRight: document.getElementById("padRight"),
+      padDown: document.getElementById("padDown"),
+      padRotate: document.getElementById("padRotate"),
+      padHard: document.getElementById("padHard"),
+
+      btnHard: document.getElementById("btnHard"),
+      btnRotateCCW: document.getElementById("btnRotateCCW"),
+    };
+
+    function createArena(rows, cols){
+      return Array.from({length: rows}, () => Array(cols).fill(null));
+    }
+
+    function cloneMatrix(m){
+      return m.map(row => row.slice());
+    }
+
+    function randPiece(){
+      const keys = Object.keys(SHAPES);
+      const type = keys[(Math.random() * keys.length) | 0];
+      return { type, matrix: cloneMatrix(SHAPES[type]) };
+    }
+
+    function rotate(matrix, dir){
+      // transpose
+      for (let y=0; y<matrix.length; y++){
+        for (let x=0; x<y; x++){
+          [matrix[x][y], matrix[y][x]] = [matrix[y][x], matrix[x][y]];
+        }
+      }
+      if (dir > 0){
+        matrix.forEach(row => row.reverse());
+      } else {
+        matrix.reverse();
+      }
+    }
+
+    function collide(arena, piece){
+      const {matrix, pos} = piece;
+      for (let y=0; y<matrix.length; y++){
+        for (let x=0; x<matrix[y].length; x++){
+          if (!matrix[y][x]) continue;
+          const ay = y + pos.y;
+          const ax = x + pos.x;
+          if (ax < 0 || ax >= COLS || ay >= ROWS) return true;
+          if (ay >= 0 && arena[ay][ax]) return true;
+        }
+      }
+      return false;
+    }
+
+    function merge(arena, piece){
+      const {matrix, pos, type} = piece;
+      for (let y=0; y<matrix.length; y++){
+        for (let x=0; x<matrix[y].length; x++){
+          if (matrix[y][x]){
+            const ay = y + pos.y;
+            const ax = x + pos.x;
+            if (ay >= 0 && ay < ROWS && ax >= 0 && ax < COLS){
+              arena[ay][ax] = type;
+            }
+          }
+        }
+      }
+    }
+
+    function sweep(arena){
+      let cleared = 0;
+      outer: for (let y=ROWS-1; y>=0; y--){
+        for (let x=0; x<COLS; x++){
+          if (!arena[y][x]) continue outer;
+        }
+        arena.splice(y, 1);
+        arena.unshift(Array(COLS).fill(null));
+        cleared++;
+        y++;
+      }
+      return cleared;
+    }
+
+    function rgba([r,g,b], a){ return `rgba(${r},${g},${b},${a})`; }
+
+    function drawCell(context, x, y, size, type, alpha=1){
+      const c = COLORS[type] || COLORS.I;
+      const px = x * size;
+      const py = y * size;
+
+      // base glass fill
+      const g = context.createLinearGradient(px, py, px+size, py+size);
+      g.addColorStop(0, rgba(c, 0.26 * alpha));
+      g.addColorStop(1, rgba([255,255,255], 0.06 * alpha));
+      context.fillStyle = g;
+      context.fillRect(px, py, size, size);
+
+      // highlight
+      context.fillStyle = "rgba(255,255,255,0.10)";
+      context.fillRect(px+2, py+2, Math.max(0, size-4), Math.max(0, size-4));
+
+      // stroke
+      context.strokeStyle = "rgba(255,255,255,0.22)";
+      context.lineWidth = 1;
+      context.strokeRect(px+0.5, py+0.5, size-1, size-1);
+    }
+
+    function drawBackgroundGrid(context, w, h, size){
+      context.clearRect(0,0,w,h);
+      // subtle background
+      context.fillStyle = "rgba(255,255,255,0.04)";
+      context.fillRect(0,0,w,h);
+
+      // grid cells
+      context.strokeStyle = "rgba(255,255,255,0.08)";
+      context.lineWidth = 1;
+      for (let x=0; x<=COLS; x++){
+        const px = x*size + 0.5;
+        context.beginPath();
+        context.moveTo(px, 0);
+        context.lineTo(px, h);
+        context.stroke();
+      }
+      for (let y=0; y<=ROWS; y++){
+        const py = y*size + 0.5;
+        context.beginPath();
+        context.moveTo(0, py);
+        context.lineTo(w, py);
+        context.stroke();
+      }
+    }
+
+    function drawArena(context, arena, size){
+      for (let y=0; y<ROWS; y++){
+        for (let x=0; x<COLS; x++){
+          const t = arena[y][x];
+          if (t) drawCell(context, x, y, size, t, 1);
+        }
+      }
+    }
+
+    function drawPiece(context, piece, size, alpha=1){
+      const {matrix, pos, type} = piece;
+      for (let y=0; y<matrix.length; y++){
+        for (let x=0; x<matrix[y].length; x++){
+          if (matrix[y][x]){
+            const ax = x + pos.x;
+            const ay = y + pos.y;
+            if (ay >= 0) drawCell(context, ax, ay, size, type, alpha);
+          }
+        }
+      }
+    }
+
+    function getDropDistance(arena, piece){
+      const test = {
+        type: piece.type,
+        matrix: piece.matrix,
+        pos: {x: piece.pos.x, y: piece.pos.y}
+      };
+      let d = 0;
+      while (true){
+        test.pos.y++;
+        if (collide(arena, test)) break;
+        d++;
+      }
+      return d;
+    }
+
+    // =========================
+    // Game State
+    // =========================
+    const arena = createArena(ROWS, COLS);
+
+    const player = {
+      pos: {x: 0, y: 0},
+      type: "T",
+      matrix: cloneMatrix(SHAPES.T),
+    };
+
+    let nextPiece = randPiece();
+    let score = 0;
+    let lines = 0;
+    let level = 1;
+
+    let paused = false;
+    let gameOver = false;
+
+    let dropCounter = 0;
+    let lastTime = 0;
+
+    function dropInterval(){
+      // level 1: ~800ms -> 逐级更快，最小 90ms
+      const ms = 820 - (level - 1) * 65;
+      return Math.max(90, ms);
+    }
+
+    function updateHUD(){
+      ui.score.textContent = String(score);
+      ui.lines.textContent = String(lines);
+      ui.level.textContent = String(level);
+    }
+
+    function showOverlay(title, text){
+      ui.ovTitle.textContent = title;
+      ui.ovText.textContent = text;
+      ui.overlay.classList.add("show");
+    }
+    function hideOverlay(){
+      ui.overlay.classList.remove("show");
+    }
+
+    function resetPlayer(){
+      const p = nextPiece;
+      nextPiece = randPiece();
+
+      player.type = p.type;
+      player.matrix = p.matrix;
+      player.pos.y = -2; // allow spawn above visible area
+      player.pos.x = ((COLS / 2) | 0) - ((player.matrix[0].length / 2) | 0);
+
+      if (collide(arena, player)){
+        gameOver = true;
+        paused = true;
+        showOverlay("游戏结束", "方块堆到顶部。点击“重开”或按 R 开始新游戏。");
+      }
+      drawNext();
+    }
+
+    function addScoreForClear(cleared){
+      // 标准近似：单/双/三/四
+      const table = [0, 100, 300, 500, 800];
+      score += (table[cleared] || 0) * level;
+    }
+
+    function maybeLevelUp(prevLines){
+      const newLevel = Math.floor(lines / 10) + 1;
+      if (newLevel !== level) level = newLevel;
+    }
+
+    function lockAndContinue(){
+      merge(arena, player);
+      const prev = lines;
+      const cleared = sweep(arena);
+      if (cleared){
+        lines += cleared;
+        addScoreForClear(cleared);
+        maybeLevelUp(prev);
+      }
+      updateHUD();
+      resetPlayer();
+    }
+
+    function softDrop(){
+      if (paused || gameOver) return;
+      player.pos.y++;
+      if (collide(arena, player)){
+        player.pos.y--;
+        lockAndContinue();
+      }
+      dropCounter = 0;
+    }
+
+    function hardDrop(){
+      if (paused || gameOver) return;
+      const d = getDropDistance(arena, player);
+      player.pos.y += d;
+      score += Math.max(0, d * 2); // 小奖励
+      lockAndContinue();
+      updateHUD();
+    }
+
+    function moveHorizontal(dir){
+      if (paused || gameOver) return;
+      player.pos.x += dir;
+      if (collide(arena, player)) player.pos.x -= dir;
+    }
+
+    function tryRotate(dir){
+      if (paused || gameOver) return;
+      const prevX = player.pos.x;
+      const m = player.matrix;
+      rotate(m, dir);
+
+      // 简单墙踢：左右尝试
+      let offset = 1;
+      while (collide(arena, player)){
+        player.pos.x += offset;
+        offset = -(offset + (offset > 0 ? 1 : -1));
+        if (Math.abs(offset) > m[0].length + 1){
+          rotate(m, -dir);
+          player.pos.x = prevX;
+          return;
+        }
+      }
+    }
+
+    function togglePause(){
+      if (gameOver) return;
+      paused = !paused;
+      if (paused) showOverlay("暂停", "按 P 或点击“暂停/继续”返回。");
+      else hideOverlay();
+    }
+
+    function newGame(){
+      for (let y=0; y<ROWS; y++) arena[y].fill(null);
+      score = 0;
+      lines = 0;
+      level = 1;
+      paused = false;
+      gameOver = false;
+      dropCounter = 0;
+      lastTime = 0;
+      nextPiece = randPiece();
+      hideOverlay();
+      resetPlayer();
+      updateHUD();
+    }
+
+    // =========================
+    // Rendering
+    // =========================
+    function resizeCanvases(){
+      // Match CSS size but render crisp with devicePixelRatio
+      const dpr = Math.max(1, Math.min(2.5, window.devicePixelRatio || 1));
+
+      const stageRect = stageEl.getBoundingClientRect();
+      const w = Math.floor(stageRect.width);
+      const h = Math.floor(stageRect.height);
+
+      // internal pixels
+      gameCanvas.width = Math.floor(w * dpr);
+      gameCanvas.height = Math.floor(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // draw in CSS pixels
+
+      // cell size based on width/cols
+      // keep integer for nicer grid
+      const cell = Math.floor(w / COLS);
+      // adjust height to fit exact rows; we draw centered vertically
+      state.render = {
+        cell,
+        w,
+        h,
+        offsetX: Math.floor((w - cell * COLS) / 2),
+        offsetY: Math.floor((h - cell * ROWS) / 2),
+      };
+
+      // next canvas
+      const nw = nextCanvas.getBoundingClientRect().width;
+      const nh = nextCanvas.getBoundingClientRect().height;
+      nextCanvas.width = Math.floor(nw * dpr);
+      nextCanvas.height = Math.floor(nh * dpr);
+      nctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    const state = {
+      render: {cell: 30, w: 300, h: 600, offsetX: 0, offsetY: 0},
+    };
+
+    function draw(){
+      const {cell, w, h, offsetX, offsetY} = state.render;
+
+      ctx.save();
+      ctx.clearRect(0, 0, w, h);
+      ctx.translate(offsetX, offsetY);
+
+      drawBackgroundGrid(ctx, cell*COLS, cell*ROWS, cell);
+
+      // arena
+      drawArena(ctx, arena, cell);
+
+      // ghost
+      if (!paused && !gameOver){
+        const d = getDropDistance(arena, player);
+        const ghost = { type: "G", matrix: player.matrix, pos: {x: player.pos.x, y: player.pos.y + d} };
+        drawPiece(ctx, ghost, cell, 0.45);
+      }
+
+      // active
+      drawPiece(ctx, player, cell, 1);
+
+      ctx.restore();
+    }
+
+    function drawNext(){
+      const w = nextCanvas.getBoundingClientRect().width;
+      const h = nextCanvas.getBoundingClientRect().height;
+      nctx.clearRect(0,0,w,h);
+
+      // background
+      nctx.fillStyle = "rgba(255,255,255,0.04)";
+      nctx.fillRect(0,0,w,h);
+
+      const p = nextPiece;
+      const m = p.matrix;
+      const size = Math.min(w, h);
+
+      const grid = 4; // 4x4预览区
+      const cell = Math.floor(size / (grid + 1)); // 留边
+      const offsetX = Math.floor((w - cell*grid) / 2);
+      const offsetY = Math.floor((h - cell*grid) / 2);
+
+      // center piece within 4x4
+      const minX = 0, minY = 0;
+      nctx.save();
+      nctx.translate(offsetX, offsetY);
+
+      for (let y=0; y<m.length; y++){
+        for (let x=0; x<m[y].length; x++){
+          if (m[y][x]){
+            drawCell(nctx, x+minX, y+minY, cell, p.type, 1);
+          }
+        }
+      }
+      nctx.restore();
+
+      // border
+      nctx.strokeStyle = "rgba(255,255,255,0.16)";
+      nctx.lineWidth = 1;
+      nctx.strokeRect(0.5,0.5,w-1,h-1);
+    }
+
+    // =========================
+    // Loop
+    // =========================
+    function update(time=0){
+      const delta = time - lastTime;
+      lastTime = time;
+
+      if (!paused && !gameOver){
+        dropCounter += delta;
+        if (dropCounter > dropInterval()){
+          softDrop();
+        }
+      }
+
+      draw();
+      requestAnimationFrame(update);
+    }
+
+    // =========================
+    // Input (Keyboard + Buttons)
+    // =========================
+    function onKeyDown(e){
+      const k = e.key;
+
+      const preventKeys = ["ArrowLeft","ArrowRight","ArrowDown","ArrowUp"," "];
+      if (preventKeys.includes(k)) e.preventDefault();
+
+      if (k === "p" || k === "P") return togglePause();
+      if (k === "r" || k === "R") return newGame();
+
+      if (paused || gameOver) return;
+
+      if (k === "ArrowLeft") return moveHorizontal(-1);
+      if (k === "ArrowRight") return moveHorizontal(1);
+      if (k === "ArrowDown") return softDrop();
+      if (k === "ArrowUp" || k === "x" || k === "X") return tryRotate(1);
+      if (k === "z" || k === "Z") return tryRotate(-1);
+      if (k === " ") return hardDrop();
+    }
+
+    // 触控按钮：支持“按住软降”
+    let softDropTimer = null;
+    function startSoftDropHold(){
+      if (softDropTimer) return;
+      softDrop();
+      softDropTimer = setInterval(() => softDrop(), 55);
+    }
+    function stopSoftDropHold(){
+      if (!softDropTimer) return;
+      clearInterval(softDropTimer);
+      softDropTimer = null;
+    }
+
+    // Bind buttons
+    ui.btnPause.addEventListener("click", togglePause);
+    ui.btnPause2.addEventListener("click", togglePause);
+    ui.btnRestart.addEventListener("click", newGame);
+    ui.btnRestart2.addEventListener("click", newGame);
+
+    ui.ovResume.addEventListener("click", () => { paused = false; hideOverlay(); });
+    ui.ovRestart.addEventListener("click", newGame);
+
+    ui.padLeft.addEventListener("click", () => moveHorizontal(-1));
+    ui.padRight.addEventListener("click", () => moveHorizontal(1));
+    ui.padRotate.addEventListener("click", () => tryRotate(1));
+    ui.padHard.addEventListener("click", hardDrop);
+
+    ui.btnHard.addEventListener("click", hardDrop);
+    ui.btnRotateCCW.addEventListener("click", () => tryRotate(-1));
+
+    // Down button: press-and-hold
+    ["pointerdown","touchstart","mousedown"].forEach(evt => {
+      ui.padDown.addEventListener(evt, (e) => { e.preventDefault(); startSoftDropHold(); }, {passive:false});
+    });
+    ["pointerup","pointercancel","touchend","touchcancel","mouseup","mouseleave"].forEach(evt => {
+      ui.padDown.addEventListener(evt, (e) => { e.preventDefault(); stopSoftDropHold(); }, {passive:false});
+    });
+
+    window.addEventListener("keydown", onKeyDown, { passive:false });
+    window.addEventListener("resize", () => { resizeCanvases(); drawNext(); });
+
+    // =========================
+    // Boot
+    // =========================
+    (function boot(){
+      resizeCanvases();
+      newGame();
+      updateHUD();
+      drawNext();
+      requestAnimationFrame(update);
+    })();
+  </script>
+</body>
+</html>
