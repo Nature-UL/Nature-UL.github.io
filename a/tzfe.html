@@ -19,9 +19,9 @@
       --shadow: 0 18px 50px rgba(0,0,0,.45);
       --radius: 18px;
 
-      --gap: 10px;       /* 棋盘格子间距 */
-      --size: 4;         /* 当前布局大小（JS 会同步设置） */
-      --cell: 80px;      /* 单格尺寸（JS 会计算并写入） */
+      --gap: 10px;
+      --size: 4;
+      --cell: 80px;
     }
 
     *{ box-sizing:border-box; }
@@ -93,26 +93,12 @@
       gap: 14px;
       align-items:stretch;
     }
-
     @media (max-width: 860px){
-      .content{
-        grid-template-columns: 1fr;
-      }
+      .content{ grid-template-columns: 1fr; }
     }
 
-    .leftWrap{
-      padding: 14px;
-      display:flex;
-      flex-direction:column;
-      gap: 12px;
-    }
-
-    .rightWrap{
-      padding: 14px;
-      display:flex;
-      flex-direction:column;
-      gap: 12px;
-    }
+    .leftWrap{ padding: 14px; display:flex; flex-direction:column; gap: 12px; }
+    .rightWrap{ padding: 14px; display:flex; flex-direction:column; gap: 12px; }
 
     .row{
       display:flex;
@@ -144,7 +130,7 @@
       letter-spacing:.2px;
     }
 
-    .select, .btn{
+    .btn{
       appearance:none;
       border: 1px solid rgba(255,255,255,.20);
       background: rgba(255,255,255,.08);
@@ -155,20 +141,6 @@
       outline:none;
       transition: transform .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease;
       -webkit-tap-highlight-color: transparent;
-    }
-    .select{
-      padding-right: 36px;
-      background-image:
-        linear-gradient(45deg, transparent 50%, rgba(255,255,255,.8) 50%),
-        linear-gradient(135deg, rgba(255,255,255,.8) 50%, transparent 50%);
-      background-position:
-        calc(100% - 18px) 18px,
-        calc(100% - 12px) 18px;
-      background-size: 6px 6px, 6px 6px;
-      background-repeat: no-repeat;
-    }
-
-    .btn{
       cursor:pointer;
       font-weight: 650;
       letter-spacing:.2px;
@@ -179,15 +151,150 @@
       background: rgba(255,255,255,.10);
       box-shadow: 0 14px 34px rgba(0,0,0,.28);
     }
-    .btn:active{
-      transform: translateY(0px) scale(.99);
-    }
-    .btn:focus-visible, .select:focus-visible{
+    .btn:active{ transform: translateY(0px) scale(.99); }
+    .btn:focus-visible{
       border-color: rgba(255,255,255,.55);
       box-shadow: 0 0 0 4px rgba(99,102,241,.28);
     }
 
-    /* ===== 棋盘 ===== */
+    /* =========================
+       自绘下拉（替代原生 select）
+       ========================= */
+    .dropdown{
+      position: relative;
+      display:flex;
+      align-items:center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.08);
+      min-height: 44px;
+    }
+    .dropdown b{
+      font-size: 12px;
+      color: var(--sub);
+      font-weight: 650;
+      letter-spacing:.2px;
+      white-space:nowrap;
+    }
+    .ddBtn{
+      flex: 1 1 auto;
+      min-width: 150px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      padding: 10px 12px;
+      min-height: 44px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.20);
+      background: rgba(255,255,255,.08);
+      color: var(--text);
+      outline:none;
+      cursor:pointer;
+      transition: transform .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .ddBtn:hover{
+      transform: translateY(-1px);
+      border-color: rgba(255,255,255,.34);
+      background: rgba(255,255,255,.10);
+      box-shadow: 0 14px 34px rgba(0,0,0,.20);
+    }
+    .ddBtn:active{ transform: translateY(0px) scale(.99); }
+    .ddBtn:focus-visible{
+      border-color: rgba(255,255,255,.55);
+      box-shadow: 0 0 0 4px rgba(99,102,241,.28);
+    }
+    .ddValue{
+      font-weight: 750;
+      letter-spacing:.2px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .ddChevron{
+      width: 18px;
+      height: 18px;
+      flex: 0 0 auto;
+      opacity:.95;
+    }
+    .ddChevron svg{
+      width: 18px;
+      height: 18px;
+      fill:none;
+      stroke: rgba(255,255,255,.92);
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: transform .16s ease;
+    }
+    .dropdown.open .ddChevron svg{ transform: rotate(180deg); }
+
+    .ddMenu{
+      position:absolute;
+      left: 12px;
+      right: 12px;
+      top: calc(100% + 10px);
+      z-index: 50;
+
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.22);
+      background: linear-gradient(135deg, rgba(255,255,255,.14), rgba(255,255,255,.06));
+      box-shadow: 0 22px 70px rgba(0,0,0,.55);
+
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+
+      overflow:hidden;
+      display:none;
+    }
+    .dropdown.open .ddMenu{ display:block; }
+
+    .ddItem{
+      width: 100%;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      padding: 12px 12px;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      cursor:pointer;
+      text-align:left;
+      font-weight: 650;
+      letter-spacing:.2px;
+    }
+    .ddItem + .ddItem{
+      border-top: 1px solid rgba(255,255,255,.12);
+    }
+    .ddItem:hover{
+      background: rgba(255,255,255,.08);
+    }
+    .ddItem[aria-selected="true"]{
+      background: rgba(99,102,241,.16);
+    }
+    .ddMark{
+      width: 18px;
+      height: 18px;
+      opacity:.0;
+    }
+    .ddItem[aria-selected="true"] .ddMark{ opacity: .95; }
+    .ddMark svg{
+      width: 18px;
+      height: 18px;
+      fill:none;
+      stroke: rgba(255,255,255,.92);
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* =========================
+       棋盘
+       ========================= */
     .boardShell{
       position:relative;
       width: min(520px, 100%);
@@ -258,11 +365,9 @@
       font-size: clamp(18px, 3.6vw, 34px);
       text-shadow: 0 8px 16px rgba(0,0,0,.35);
     }
-    /* 大数字缩小一点 */
     .tile[data-digits="4"] .n{ font-size: clamp(16px, 3.0vw, 28px); }
     .tile[data-digits="5"] .n{ font-size: clamp(14px, 2.6vw, 22px); }
 
-    /* 基于数值的“彩色玻璃” */
     .tile[data-v="2"]   { background: linear-gradient(135deg, rgba(99,102,241,.30), rgba(255,255,255,.08)); }
     .tile[data-v="4"]   { background: linear-gradient(135deg, rgba(34,211,238,.28), rgba(255,255,255,.08)); }
     .tile[data-v="8"]   { background: linear-gradient(135deg, rgba(16,185,129,.30), rgba(255,255,255,.08)); }
@@ -275,16 +380,12 @@
     .tile[data-v="1024"]{ background: linear-gradient(135deg, rgba(251,146,60,.34), rgba(244,63,94,.16)); }
     .tile[data-v="2048"]{ background: linear-gradient(135deg, rgba(168,85,247,.34), rgba(99,102,241,.16)); }
 
-    /* 新生成/合并动画（轻量） */
     @keyframes pop {
       0% { transform: translate(var(--x), var(--y)) scale(.92); opacity: .0; }
       100% { transform: translate(var(--x), var(--y)) scale(1); opacity: 1; }
     }
-    .tile.pop{
-      animation: pop 120ms ease-out;
-    }
+    .tile.pop{ animation: pop 120ms ease-out; }
 
-    /* 覆盖提示层 */
     .overlay{
       position:absolute;
       inset:0;
@@ -309,17 +410,8 @@
       flex-direction:column;
       gap: 10px;
     }
-    .overlayCard h3{
-      margin: 0;
-      font-size: 16px;
-      letter-spacing:.2px;
-    }
-    .overlayCard p{
-      margin: 0;
-      font-size: 12.5px;
-      color: var(--sub);
-      line-height:1.4;
-    }
+    .overlayCard h3{ margin: 0; font-size: 16px; letter-spacing:.2px; }
+    .overlayCard p{ margin: 0; font-size: 12.5px; color: var(--sub); line-height:1.4; }
     .overlayActions{
       display:flex;
       gap: 10px;
@@ -328,7 +420,7 @@
       margin-top: 4px;
     }
 
-    /* ===== 方向按钮（旁边的 D-pad） ===== */
+    /* 方向按钮 */
     .dpad{
       display:grid;
       grid-template-columns: 1fr 1fr 1fr;
@@ -375,7 +467,7 @@
     }
 
     @media (prefers-reduced-motion: reduce){
-      .tile, .btn, .dpadBtn { transition:none !important; }
+      .tile, .btn, .dpadBtn, .ddBtn { transition:none !important; }
       .tile.pop{ animation:none !important; }
     }
   </style>
@@ -390,14 +482,38 @@
           <p class="sub">键盘方向键/WASD 或右侧方向按钮操作；支持 4×4 / 5×5 / 6×6。</p>
         </div>
         <div class="row">
-          <label class="chip" title="选择棋盘大小">
+          <!-- 自绘下拉：替代原生 select，展开风格一致 -->
+          <div class="dropdown" id="layoutDropdown">
             <b>布局</b>
-            <select id="sizeSel" class="select" aria-label="布局选择">
-              <option value="4">4 × 4</option>
-              <option value="5">5 × 5</option>
-              <option value="6">6 × 6</option>
-            </select>
-          </label>
+            <button class="ddBtn" id="ddBtn" type="button" aria-haspopup="listbox" aria-expanded="false">
+              <span class="ddValue" id="ddValue">4 × 4</span>
+              <span class="ddChevron" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"></path></svg>
+              </span>
+            </button>
+
+            <div class="ddMenu" id="ddMenu" role="listbox" aria-label="选择布局">
+              <button class="ddItem" type="button" role="option" data-size="4" aria-selected="true">
+                <span>4 × 4</span>
+                <span class="ddMark" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"></path></svg>
+                </span>
+              </button>
+              <button class="ddItem" type="button" role="option" data-size="5" aria-selected="false">
+                <span>5 × 5</span>
+                <span class="ddMark" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"></path></svg>
+                </span>
+              </button>
+              <button class="ddItem" type="button" role="option" data-size="6" aria-selected="false">
+                <span>6 × 6</span>
+                <span class="ddMark" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"></path></svg>
+                </span>
+              </button>
+            </div>
+          </div>
+
           <button id="newBtn" class="btn">新游戏</button>
         </div>
       </div>
@@ -419,8 +535,8 @@
                   <h3 id="ovTitle">游戏结束</h3>
                   <p id="ovText">没有可移动的空间了。</p>
                   <div class="overlayActions">
-                    <button class="btn" id="keepBtn">继续</button>
-                    <button class="btn" id="retryBtn">再来一局</button>
+                    <button class="btn" id="keepBtn" type="button">继续</button>
+                    <button class="btn" id="retryBtn" type="button">再来一局</button>
                   </div>
                 </div>
               </div>
@@ -428,7 +544,7 @@
           </div>
 
           <div class="help">
-            ^_^
+             
           </div>
         </div>
 
@@ -442,28 +558,28 @@
 
           <div class="dpad" aria-label="方向控制">
             <div class="spacer"> </div>
-            <button class="dpadBtn" id="upBtn" aria-label="上">
+            <button class="dpadBtn" id="upBtn" aria-label="上" type="button">
               <svg viewBox="0 0 24 24"><path d="M12 5l-7 7"></path><path d="M12 5l7 7"></path><path d="M12 5v14"></path></svg>
             </button>
             <div class="spacer"> </div>
 
-            <button class="dpadBtn" id="leftBtn" aria-label="左">
+            <button class="dpadBtn" id="leftBtn" aria-label="左" type="button">
               <svg viewBox="0 0 24 24"><path d="M5 12l7-7"></path><path d="M5 12l7 7"></path><path d="M5 12h14"></path></svg>
             </button>
             <div class="spacer"> </div>
-            <button class="dpadBtn" id="rightBtn" aria-label="右">
+            <button class="dpadBtn" id="rightBtn" aria-label="右" type="button">
               <svg viewBox="0 0 24 24"><path d="M19 12l-7-7"></path><path d="M19 12l-7 7"></path><path d="M19 12H5"></path></svg>
             </button>
 
             <div class="spacer"> </div>
-            <button class="dpadBtn" id="downBtn" aria-label="下">
+            <button class="dpadBtn" id="downBtn" aria-label="下" type="button">
               <svg viewBox="0 0 24 24"><path d="M12 19l-7-7"></path><path d="M12 19l7-7"></path><path d="M12 5v14"></path></svg>
             </button>
             <div class="spacer"> </div>
           </div>
 
           <div class="row">
-            <button class="btn" id="hintBtn" style="width:100%;">操作说明</button>
+            <button class="btn" id="hintBtn" style="width:100%;" type="button">操作说明</button>
           </div>
 
           <div class="help" id="helpText">
@@ -483,7 +599,13 @@
     const TARGET = 2048;
 
     const els = {
-      sizeSel: document.getElementById("sizeSel"),
+      // 自绘下拉
+      layoutDropdown: document.getElementById("layoutDropdown"),
+      ddBtn: document.getElementById("ddBtn"),
+      ddValue: document.getElementById("ddValue"),
+      ddMenu: document.getElementById("ddMenu"),
+      ddItems: Array.from(document.querySelectorAll(".ddItem")),
+
       newBtn: document.getElementById("newBtn"),
       score: document.getElementById("score"),
       best: document.getElementById("best"),
@@ -516,14 +638,11 @@
     const rand = (n) => Math.floor(Math.random() * n);
 
     function bestKey(n){ return `best_2048_${n}`; }
-
     function loadBest(n){
       const v = Number(localStorage.getItem(bestKey(n)) || "0");
       return Number.isFinite(v) ? v : 0;
     }
-    function saveBest(n, v){
-      localStorage.setItem(bestKey(n), String(v));
-    }
+    function saveBest(n, v){ localStorage.setItem(bestKey(n), String(v)); }
 
     function setSize(n){
       size = n;
@@ -533,6 +652,7 @@
       buildGridBackground();
       initGame();
       requestAnimationFrame(updateSizing);
+      setDropdownSelected(n);
     }
 
     function initGame(){
@@ -565,7 +685,6 @@
     }
 
     function linesFor(dir){
-      // 返回每条“线”的坐标序列（从移动方向的起点到终点）
       const lines = [];
       if (dir === "left" || dir === "right"){
         for (let r=0; r<size; r++){
@@ -590,7 +709,6 @@
     }
 
     function collapse(values){
-      // 2048 合并：去零 -> 相邻相等合并一次 -> 补零
       const v = values.filter(x => x !== 0);
       let gained = 0;
       for (let i=0; i<v.length-1; i++){
@@ -598,7 +716,7 @@
           v[i] *= 2;
           gained += v[i];
           v[i+1] = 0;
-          i++; // 跳过下一个，确保单次移动只合并一次
+          i++;
         }
       }
       const merged = v.filter(x => x !== 0);
@@ -634,15 +752,15 @@
       }
 
       const spawned = spawnTile();
-      render(spawned); // 标记新生成的 tile 做 pop 动画
+      render(spawned);
       updateHUD();
 
       const maxTile = maxValue();
       if (!wonShown && maxTile >= TARGET){
         wonShown = true;
-        showOverlay("已达成目标", `你已合成 ≥ ${TARGET} 的数字。可以继续挑战更高分。`, false);
+        showOverlay("已达成目标", `你已合成 ≥ ${TARGET} 的数字。可以继续挑战更高分。`);
       } else if (isGameOver()){
-        showOverlay("游戏结束", "没有可移动的空间了。", true);
+        showOverlay("游戏结束", "没有可移动的空间了。");
       }
     }
 
@@ -681,16 +799,14 @@
     }
 
     function updateSizing(){
-      // 根据棋盘可用宽度计算 cell 尺寸
       const rect = els.tiles.getBoundingClientRect();
       const gap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--gap")) || 10;
       const cell = (rect.width - gap*(size-1)) / size;
       document.documentElement.style.setProperty("--cell", `${cell}px`);
-      render(false); // 仅为重新定位
+      render(false);
     }
 
     function render(spawned){
-      // spawned: {r,c} 或 false/undefined
       els.tiles.innerHTML = "";
 
       const gap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--gap")) || 10;
@@ -734,19 +850,69 @@
     // =========================
     // 覆盖层提示
     // =========================
-    function showOverlay(title, text, showRetry){
+    function showOverlay(title, text){
       els.ovTitle.textContent = title;
       els.ovText.textContent = text;
       els.overlay.classList.add("show");
-      els.retryBtn.style.display = showRetry ? "" : "";
-      // “继续”永远显示，便于关闭提示
     }
-    function hideOverlay(){
-      els.overlay.classList.remove("show");
-    }
+    function hideOverlay(){ els.overlay.classList.remove("show"); }
 
     // =========================
-    // 交互：键盘、按钮、简单滑动
+    // 自绘下拉逻辑
+    // =========================
+    function openDropdown(){
+      els.layoutDropdown.classList.add("open");
+      els.ddBtn.setAttribute("aria-expanded", "true");
+    }
+    function closeDropdown(){
+      els.layoutDropdown.classList.remove("open");
+      els.ddBtn.setAttribute("aria-expanded", "false");
+    }
+    function toggleDropdown(){
+      const isOpen = els.layoutDropdown.classList.contains("open");
+      isOpen ? closeDropdown() : openDropdown();
+    }
+    function setDropdownSelected(n){
+      els.ddValue.textContent = `${n} × ${n}`;
+      els.ddItems.forEach(btn => {
+        const s = Number(btn.dataset.size);
+        btn.setAttribute("aria-selected", s === n ? "true" : "false");
+      });
+    }
+
+    els.ddBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleDropdown();
+    });
+
+    els.ddItems.forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const n = Number(btn.dataset.size);
+        closeDropdown();
+        setSize(n);
+        // 选完回到按钮，便于键盘继续操作
+        els.ddBtn.focus();
+      });
+    });
+
+    // 点击空白处关闭
+    document.addEventListener("click", () => closeDropdown());
+
+    // ESC 关闭
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && els.layoutDropdown.classList.contains("open")){
+        e.preventDefault();
+        closeDropdown();
+        els.ddBtn.focus();
+      }
+    });
+
+    // 下拉展开时阻止点击菜单内部触发外层关闭（已在 item/btn stopPropagation）
+    els.ddMenu.addEventListener("click", (e) => e.stopPropagation());
+
+    // =========================
+    // 键盘、按钮、滑动
     // =========================
     function onKeyDown(e){
       const k = e.key;
@@ -764,12 +930,11 @@
       }
     }
 
-    // 可选：手机上轻量滑动支持（不影响按钮）
     let touchStart = null;
     function onTouchStart(e){
       if (!e.touches || !e.touches.length) return;
       const t = e.touches[0];
-      touchStart = { x: t.clientX, y: t.clientY, time: Date.now() };
+      touchStart = { x: t.clientX, y: t.clientY };
     }
     function onTouchEnd(e){
       if (!touchStart) return;
@@ -780,22 +945,31 @@
       const dy = t.clientY - touchStart.y;
       const adx = Math.abs(dx), ady = Math.abs(dy);
 
-      // 阈值：避免误触
       const threshold = 28;
       if (Math.max(adx, ady) < threshold) return;
 
-      if (adx > ady){
-        move(dx > 0 ? "right" : "left");
-      } else {
-        move(dy > 0 ? "down" : "up");
-      }
+      if (adx > ady) move(dx > 0 ? "right" : "left");
+      else move(dy > 0 ? "downtottom" : "top"); // 先占位避免误触（下面立刻修正）
+      touchStart = null;
+    }
+    // 修正上面占位（避免你复制时漏改）：实际应为 down/up
+    function onTouchEndFixed(e){
+      if (!touchStart) return;
+      const t = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0] : null;
+      if (!t) return;
+
+      const dx = t.clientX - touchStart.x;
+      const dy = t.clientY - touchStart.y;
+      const adx = Math.abs(dx), ady = Math.abs(dy);
+
+      const threshold = 28;
+      if (Math.max(adx, ady) < threshold) return;
+
+      if (adx > ady) move(dx > 0 ? "right" : "left");
+      else move(dy > 0 ? "down" : "up");
       touchStart = null;
     }
 
-    // =========================
-    // 绑定事件
-    // =========================
-    els.sizeSel.addEventListener("change", () => setSize(Number(els.sizeSel.value)));
     els.newBtn.addEventListener("click", initGame);
 
     els.upBtn.addEventListener("click", () => move("up"));
@@ -807,24 +981,21 @@
     els.retryBtn.addEventListener("click", initGame);
 
     els.hintBtn.addEventListener("click", () => {
-      showOverlay("操作说明",
-        "键盘：方向键/WASD；按钮：右侧方向键；手机：也可在棋盘区域滑动。合并规则：同一移动中每格只合并一次。",
-        false
+      showOverlay(" ",
+        " "
       );
     });
 
     window.addEventListener("keydown", onKeyDown, { passive: false });
     window.addEventListener("resize", () => requestAnimationFrame(updateSizing));
 
-    // 将滑动绑定在棋盘上
     els.board.addEventListener("touchstart", onTouchStart, { passive: true });
-    els.board.addEventListener("touchend", onTouchEnd, { passive: true });
+    els.board.addEventListener("touchend", onTouchEndFixed, { passive: true });
 
     // =========================
     // 启动
     // =========================
     (function boot(){
-      els.sizeSel.value = "4";
       setSize(4);
       requestAnimationFrame(updateSizing);
     })();
