@@ -1,0 +1,581 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Web Deck Template (Blue/Teal)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- 可选：更“高级”的字体（不想依赖网络可删掉） -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+
+<body>
+  <!-- 动态科技背景（Canvas 粒子/连线） -->
+  <canvas id="bg" aria-hidden="true"></canvas>
+
+  <!-- 顶部栏（可隐藏） -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-dot"></span>
+      <span class="brand-text">WebDeck</span>
+      <span class="brand-sub">HTML / CSS / JS</span>
+    </div>
+
+    <div class="topbar-actions">
+      <button class="btn ghost" id="btnNotes" title="演讲者备注（N）">Notes</button>
+      <button class="btn ghost" id="btnOverview" title="总览（O）">Overview</button>
+      <button class="btn" id="btnPresent" title="演示模式（P）">Present</button>
+    </div>
+  </header>
+
+  <!-- 右侧导航（圆点 + 进度） -->
+  <aside class="deck-nav" aria-label="Slides Navigation">
+    <div class="progress">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+    <div class="dots" id="dots"></div>
+
+    <div class="nav-hints">
+      <div class="hint">↑ ↓ / 滚轮</div>
+      <div class="hint">Space / Enter</div>
+      <div class="hint">O 总览 · N 备注 · P 演示</div>
+    </div>
+  </aside>
+
+  <!-- Slide 容器：PPT式分段滑动 -->
+  <main class="deck" id="deck">
+    <!-- Slide 1: Cover -->
+    <section class="slide" id="slide-1" data-title="封面" data-notes="开场：一句话定义价值。强调：网页=更强的导航与动效。">
+      <div class="stage">
+        <div class="gridlines" aria-hidden="true"></div>
+
+        <div class="cover">
+          <div class="kicker reveal">Blue/Teal · Futuristic · Web Deck</div>
+          <h1 class="title reveal">
+            用前端网页<br />
+            取代 PPT 的展示模板
+          </h1>
+
+          <p class="subtitle reveal">
+            具备：分段翻页 · 导航 · 动效触发 · 深链接 · 备注面板 · 总览模式 · 打印友好
+          </p>
+
+          <div class="cover-meta reveal">
+            <div class="meta-pill">Scroll-snap + 节流翻页</div>
+            <div class="meta-pill">Canvas 动态背景</div>
+            <div class="meta-pill">IntersectionObserver 动效</div>
+            <div class="meta-pill">Hash Deep-link</div>
+          </div>
+
+          <div class="cta reveal">
+            <button class="btn" data-goto="2">开始</button>
+            <button class="btn ghost" id="btnCopyLink">复制当前页链接</button>
+          </div>
+
+          <div class="micro reveal">
+            提示：按 <kbd>O</kbd> 进入总览，按 <kbd>N</kbd> 打开备注，按 <kbd>P</kbd> 切换演示模式
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 2: Agenda -->
+    <section class="slide" id="slide-2" data-title="目录" data-notes="用目录强调“导航优势”，说明可跳转与深链接。">
+      <div class="stage">
+        <div class="slide-head">
+          <div class="eyebrow reveal">Agenda</div>
+          <h2 class="h2 reveal">为什么网页更适合作为“高级 PPT”</h2>
+          <p class="lead reveal">把 PPT 的“线性翻页”保留，同时拿到 Web 的“非线性能力”。</p>
+        </div>
+
+        <div class="cols">
+          <div class="card reveal">
+            <div class="card-title">01 · 结构</div>
+            <div class="card-body">
+              <ul class="list">
+                <li>slide 分段 + scroll-snap</li>
+                <li>hash 深链接：可分享某一页</li>
+                <li>总览模式：像 Keynote 的缩略图</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="card reveal">
+            <div class="card-title">02 · 表达</div>
+            <div class="card-body">
+              <ul class="list">
+                <li>动效按“进入视口”触发</li>
+                <li>交互组件：Tab / Step / Hover</li>
+                <li>可嵌入真实数据与可交互图表</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="card reveal">
+            <div class="card-title">03 · 工程化</div>
+            <div class="card-body">
+              <ul class="list">
+                <li>主题变量：一处改色全局生效</li>
+                <li>组件可复用，团队协作友好</li>
+                <li>可导出打印（PDF）与版本管理</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="footer reveal">
+          <button class="btn ghost" data-goto="3">下一页示例 →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 3: Feature Blocks -->
+    <section class="slide" id="slide-3" data-title="组件示例" data-notes="展示卡片、徽标、hover、分栏与层次。强调审美与信息密度。">
+      <div class="stage">
+        <div class="slide-head">
+          <div class="eyebrow reveal">Components</div>
+          <h2 class="h2 reveal">高密度信息表达，但不拥挤</h2>
+          <p class="lead reveal">用“玻璃拟态 + 霓虹描边 + 细网格”控制质感。</p>
+        </div>
+
+        <div class="feature-grid">
+          <article class="feature reveal">
+            <div class="badge">Navigation</div>
+            <h3 class="h3">圆点 + 进度条 + 键盘</h3>
+            <p class="p">滚轮/方向键节流翻页，保证“每一页就是一页”。</p>
+          </article>
+
+          <article class="feature reveal">
+            <div class="badge">Motion</div>
+            <h3 class="h3">视口触发动效</h3>
+            <p class="p">IntersectionObserver + CSS 动画，避免无意义常驻动效。</p>
+          </article>
+
+          <article class="feature reveal">
+            <div class="badge">Deep Link</div>
+            <h3 class="h3">链接定位到任意页</h3>
+            <p class="p">演示时可跳转；评审时可直接引用页码与 URL。</p>
+          </article>
+
+          <article class="feature reveal">
+            <div class="badge">Notes</div>
+            <h3 class="h3">演讲者备注面板</h3>
+            <p class="p">适合“口播提示/节奏控制”，比 PPT 备注更易扩展。</p>
+          </article>
+
+          <article class="feature reveal">
+            <div class="badge">Overview</div>
+            <h3 class="h3">总览缩略图</h3>
+            <p class="p">快速定位与重排思路：网页可以做“导航级 UI”。</p>
+          </article>
+
+          <article class="feature reveal">
+            <div class="badge">Print</div>
+            <h3 class="h3">打印友好</h3>
+            <p class="p">@media print 按页分页，导出 PDF 做“离线备份”。</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 4: Timeline -->
+    <section class="slide" id="slide-4" data-title="叙事结构" data-notes="展示时间线/步骤条类组件，体现比 PPT 方便。">
+      <div class="stage">
+        <div class="slide-head">
+          <div class="eyebrow reveal">Story</div>
+          <h2 class="h2 reveal">把“叙事结构”组件化</h2>
+          <p class="lead reveal">PPT 画时间线很费劲，但网页是天然组件。</p>
+        </div>
+
+        <div class="timeline reveal">
+          <div class="t-item">
+            <div class="t-dot"></div>
+            <div class="t-content">
+              <div class="t-title">Step 1 · 定义主题变量</div>
+              <div class="t-desc">颜色/字体/圆角/阴影统一管理，保证高级感一致。</div>
+            </div>
+          </div>
+          <div class="t-item">
+            <div class="t-dot"></div>
+            <div class="t-content">
+              <div class="t-title">Step 2 · 抽象 Slide 结构</div>
+              <div class="t-desc">stage（舞台）限制内容宽度，适配投屏与网页。</div>
+            </div>
+          </div>
+          <div class="t-item">
+            <div class="t-dot"></div>
+            <div class="t-content">
+              <div class="t-title">Step 3 · 增强交互能力</div>
+              <div class="t-desc">总览、备注、深链接、快捷键、进度反馈。</div>
+            </div>
+          </div>
+          <div class="t-item">
+            <div class="t-dot"></div>
+            <div class="t-content">
+              <div class="t-title">Step 4 · 持续迭代组件库</div>
+              <div class="t-desc">卡片、表格、对比、图表、Demo 嵌入，逐步可复用。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 5: Chart-ish (SVG) -->
+    <section class="slide" id="slide-5" data-title="数据表达" data-notes="强调：网页可用真实图表库；这里先用 SVG 做轻量示例。">
+      <div class="stage">
+        <div class="slide-head">
+          <div class="eyebrow reveal">Data</div>
+          <h2 class="h2 reveal">轻量 SVG 图表示例</h2>
+          <p class="lead reveal">无需依赖图表库也能有质感（当然也可接 ECharts/D3）。</p>
+        </div>
+
+        <div class="chart-wrap reveal">
+          <svg viewBox="0 0 900 240" class="chart" role="img" aria-label="Example chart">
+            <defs>
+              <linearGradient id="g1" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stop-color="rgba(0, 255, 224, 0.9)"/>
+                <stop offset="1" stop-color="rgba(0, 153, 255, 0.9)"/>
+              </linearGradient>
+              <filter id="glow">
+                <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                <feMerge>
+                  <feMergeNode in="coloredBlur"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
+            </defs>
+
+            <!-- grid -->
+            <g class="chart-grid">
+              <line x1="40" y1="200" x2="860" y2="200"></line>
+              <line x1="40" y1="150" x2="860" y2="150"></line>
+              <line x1="40" y1="100" x2="860" y2="100"></line>
+              <line x1="40" y1="50"  x2="860" y2="50"></line>
+            </g>
+
+            <!-- line -->
+            <path class="chart-line" filter="url(#glow)" d="M40,170 C160,150 240,120 320,132 C420,146 500,90 600,110 C700,130 780,80 860,70"></path>
+
+            <!-- points -->
+            <g class="chart-points">
+              <circle cx="40" cy="170" r="4"></circle>
+              <circle cx="240" cy="120" r="4"></circle>
+              <circle cx="320" cy="132" r="4"></circle>
+              <circle cx="500" cy="90"  r="4"></circle>
+              <circle cx="600" cy="110" r="4"></circle>
+              <circle cx="780" cy="80"  r="4"></circle>
+              <circle cx="860" cy="70"  r="4"></circle>
+            </g>
+
+            <!-- labels -->
+            <g class="chart-labels">
+              <text x="40" y="225">W1</text>
+              <text x="240" y="225">W2</text>
+              <text x="440" y="225">W3</text>
+              <text x="640" y="225">W4</text>
+              <text x="840" y="225">W5</text>
+            </g>
+          </svg>
+
+          <div class="chart-side">
+            <div class="metric reveal">
+              <div class="metric-k">Throughput</div>
+              <div class="metric-v">+38.6%</div>
+              <div class="metric-h">交互带来更高的信息到达率</div>
+            </div>
+            <div class="metric reveal">
+              <div class="metric-k">Navigation</div>
+              <div class="metric-v">Deep-link</div>
+              <div class="metric-h">把“页码”变成可分享 URL</div>
+            </div>
+            <div class="metric reveal">
+              <div class="metric-k">Motion</div>
+              <div class="metric-v">In-view</div>
+              <div class="metric-h">动效只在需要时出现</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 6: Code -->
+    <section class="slide" id="slide-6" data-title="代码片段" data-notes="技术观众：展示核心实现理念。非技术观众：强调可维护性。">
+      <div class="stage">
+        <div class="slide-head">
+          <div class="eyebrow reveal">Engineering</div>
+          <h2 class="h2 reveal">核心能力：可维护、可复用、可版本管理</h2>
+          <p class="lead reveal">把“展示”当作产品的一部分，而不是一次性文件。</p>
+        </div>
+
+        <div class="code-grid">
+          <div class="code-card reveal">
+            <div class="code-title">滚轮节流翻页（示意）</div>
+            <pre class="code"><code>// wheel -> next/prev slide (with cooldown)
+let lock = false;
+window.addEventListener('wheel', (e) => {
+  if (lock) return;
+  if (Math.abs(e.deltaY) < 18) return;
+  e.preventDefault();
+  lock = true;
+  goTo(current + (e.deltaY > 0 ? 1 : -1));
+  setTimeout(() => (lock = false), 680);
+}, { passive: false });</code></pre>
+          </div>
+
+          <div class="code-card reveal">
+            <div class="code-title">视口触发动效（示意）</div>
+            <pre class="code"><code>const io = new IntersectionObserver((entries) => {
+  entries.forEach((en) => {
+    en.target.classList.toggle('in-view', en.isIntersecting);
+  });
+}, { threshold: 0.35 });
+
+document.querySelectorAll('.slide').forEach(s => io.observe(s));</code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 7-->
+    <section class="slide" id="slide-split" data-title="Split Hero" data-notes="一张图+三点价值，发布会最常用结构。">
+    <div class="stage">
+        <div class="slide-head">
+        <div class="eyebrow reveal">Launch</div>
+        <h2 class="h2 reveal">一个页面 = 一张关键画面</h2>
+        <p class="lead reveal">左侧可放截图/视频/动图，右侧结构化表达价值。</p>
+        </div>
+
+        <div class="layout-split reveal">
+        <div class="media-frame">
+            <div class="media-placeholder">
+            <div class="ph-title">Media</div>
+            <div class="ph-sub">Image / Video / Demo</div>
+            </div>
+        </div>
+
+        <div class="split-copy">
+            <div class="pill-row">
+            <span class="pill">Blue/Teal</span>
+            <span class="pill">Glass</span>
+            <span class="pill">Motion</span>
+            </div>
+
+            <h3 class="h3">三条关键信息</h3>
+            <ul class="list">
+            <li>第一条价值：一句话讲清楚</li>
+            <li>第二条价值：给出对比/指标</li>
+            <li>第三条价值：给出行动/下一步</li>
+            </ul>
+
+            <div class="cta">
+            <button class="btn ghost">查看 Demo</button>
+            <button class="btn">立即试用</button>
+            </div>
+        </div>
+        </div>
+    </div>
+    </section>
+
+    <!-- Slide 8-->
+    <section class="slide" id="slide-kpi" data-title="KPI Dashboard" data-notes="用 4-6 个指标卡建立可信度与结果感。">
+    <div class="stage">
+        <div class="slide-head">
+        <div class="eyebrow reveal">Metrics</div>
+        <h2 class="h2 reveal">结果一眼读懂</h2>
+        <p class="lead reveal">网页的优势：指标可接真实数据、可交互 drill-down。</p>
+        </div>
+
+        <div class="kpi-grid reveal">
+        <div class="kpi">
+            <div class="kpi-k">Active Users</div>
+            <div class="kpi-v">128,430</div>
+            <div class="kpi-d">WoW +12.4%</div>
+        </div>
+        <div class="kpi">
+            <div class="kpi-k">Conversion</div>
+            <div class="kpi-v">4.86%</div>
+            <div class="kpi-d">MoM +0.8pp</div>
+        </div>
+        <div class="kpi">
+            <div class="kpi-k">Latency P95</div>
+            <div class="kpi-v">182ms</div>
+            <div class="kpi-d">-36ms</div>
+        </div>
+        <div class="kpi">
+            <div class="kpi-k">NPS</div>
+            <div class="kpi-v">62</div>
+            <div class="kpi-d">+7</div>
+        </div>
+        </div>
+
+        <div class="callout reveal">
+        <div class="callout-title">结论</div>
+        <div class="callout-body">指标卡用于建立“结果感”，下一页再解释原因与策略。</div>
+        </div>
+    </div>
+    </section>
+
+    <!--Slide 9-->
+    <section class="slide" id="slide-compare" data-title="Compare" data-notes="对比页：旧方案 vs 新方案，最好给出维度与结论。">
+    <div class="stage">
+        <div class="slide-head">
+        <div class="eyebrow reveal">Compare</div>
+        <h2 class="h2 reveal">旧方案 vs 新方案</h2>
+        <p class="lead reveal">强调“迁移成本”和“收益”，让决策更快。</p>
+        </div>
+
+        <div class="compare reveal">
+        <div class="compare-card">
+            <div class="compare-title">PPT</div>
+            <ul class="list">
+            <li>线性展示强</li>
+            <li>交互与导航弱</li>
+            <li>版本管理困难</li>
+            <li>可复用组件少</li>
+            </ul>
+        </div>
+
+        <div class="compare-card strong">
+            <div class="compare-title">Web Deck</div>
+            <ul class="list">
+            <li>保留翻页节奏</li>
+            <li>深链接/总览/动效</li>
+            <li>工程化与协作友好</li>
+            <li>可接真实数据与 Demo</li>
+            </ul>
+        </div>
+        </div>
+    </div>
+    </section>
+
+    <!--Slide 10-->
+    <section class="slide" id="slide-table" data-title="Table" data-notes="表格在网页里可以做排序/筛选/搜索；这里先给静态样式。">
+    <div class="stage">
+        <div class="slide-head">
+        <div class="eyebrow reveal">Details</div>
+        <h2 class="h2 reveal">计划/清单表格</h2>
+        <p class="lead reveal">适合路线图、需求列表、里程碑拆解。</p>
+        </div>
+
+        <div class="table-wrap reveal">
+        <table class="t">
+            <thead>
+            <tr>
+                <th>模块</th>
+                <th>目标</th>
+                <th>Owner</th>
+                <th>状态</th>
+                <th>截止</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>主题系统</td><td>多皮肤切换</td><td>A</td><td><span class="tag ok">On Track</span></td><td>Feb 12</td>
+            </tr>
+            <tr>
+                <td>组件库</td><td>12+ Layout</td><td>B</td><td><span class="tag warn">Risk</span></td><td>Feb 20</td>
+            </tr>
+            <tr>
+                <td>演讲模式</td><td>计时/激光笔</td><td>C</td><td><span class="tag todo">Todo</span></td><td>Mar 01</td>
+            </tr>
+            </tbody>
+        </table>
+        </div>
+    </div>
+    </section>
+
+    <!--Slide 11-->
+    <section class="slide" id="slide-wall" data-title="Gallery" data-notes="图片墙用来“快速扫视”，每格可点开大图/视频。">
+    <div class="stage">
+        <div class="slide-head">
+        <div class="eyebrow reveal">Gallery</div>
+        <h2 class="h2 reveal">截图 / 案例墙</h2>
+        <p class="lead reveal">PPT也能摆，但网页能做 hover/放大/弹层。</p>
+        </div>
+
+        <div class="wall reveal">
+        <div class="tile"><div class="tile-cap">Case 01</div></div>
+        <div class="tile"><div class="tile-cap">Case 02</div></div>
+        <div class="tile"><div class="tile-cap">Case 03</div></div>
+        <div class="tile"><div class="tile-cap">Case 04</div></div>
+        <div class="tile"><div class="tile-cap">Case 05</div></div>
+        <div class="tile"><div class="tile-cap">Case 06</div></div>
+        </div>
+    </div>
+    </section>
+
+    <!--Slide 12-->
+    <section class="slide" id="slide-faq" data-title="FAQ" data-notes="用 details/summary 直接做交互，不需要 JS。">
+    <div class="stage">
+        <div class="slide-head">
+        <div class="eyebrow reveal">FAQ</div>
+        <h2 class="h2 reveal">常见问题</h2>
+        <p class="lead reveal">这类交互在 PPT 很难“自然地做”。</p>
+        </div>
+
+        <div class="faq reveal">
+        <details open>
+            <summary>是否必须用框架（React/Vue）？</summary>
+            <div class="faq-a">不必须。你现在这套是纯原生三件套，方便交付与迁移。</div>
+        </details>
+        <details>
+            <summary>如何做到更“演讲模式”？</summary>
+            <div class="faq-a">增加计时器、激光笔、隐藏 UI、双屏 presenter view 等。</div>
+        </details>
+        <details>
+            <summary>如何给每页加更多动效？</summary>
+            <div class="faq-a">建议按“进入视口”触发，并提供 per-slide 动效类名开关。</div>
+        </details>
+        </div>
+    </div>
+    </section>
+
+    <!-- Slide End -->
+    <section class="slide" id="slide-7" data-title="收尾" data-notes="收束：下一步你要我做的就是扩充组件类型与主题皮肤。">
+      <div class="stage">
+        <div class="end reveal">
+          <div class="eyebrow">Finish</div>
+          <h2 class="h2">这是一套“能跑”的 Web Deck 模板</h2>
+          <p class="lead">
+            下一步扩展通常是：更多 Slide Layout（对比/表格/图片墙/视频）、主题皮肤、以及接入图表库与路由。
+          </p>
+
+          <div class="end-actions">
+            <button class="btn" data-goto="1">回到封面</button>
+            <button class="btn ghost" id="btnPrint">打印 / 导出 PDF</button>
+          </div>
+
+          <div class="micro">
+            你可以直接复制这套结构，改文案与组件，像写网页一样“写 PPT”。
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Notes Drawer -->
+  <aside class="notes" id="notes" aria-label="Speaker Notes" hidden>
+    <div class="notes-head">
+      <div class="notes-title">Speaker Notes</div>
+      <button class="btn ghost small" id="btnCloseNotes">Close</button>
+    </div>
+    <div class="notes-body">
+      <div class="notes-meta" id="notesMeta"></div>
+      <div class="notes-text" id="notesText"></div>
+    </div>
+  </aside>
+
+  <!-- Overview Modal -->
+  <div class="overview" id="overview" hidden>
+    <div class="overview-head">
+      <div class="overview-title">Overview</div>
+      <button class="btn ghost small" id="btnCloseOverview">Close</button>
+    </div>
+    <div class="overview-grid" id="overviewGrid"></div>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
