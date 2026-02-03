@@ -494,31 +494,25 @@
     }
     .aiGrid{
       display:grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: minmax(0, 1fr);
       gap: 10px;
     }
-    .aiField{
+    .aiMeta{
       display:flex;
-      flex-direction:column;
-      gap: 6px;
-    }
-    .aiField label{
-      font-size: 12px;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.08);
+      font-size: 12.5px;
       color: var(--sub);
     }
-    .aiField input{
-      width:100%;
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.20);
-      background: rgba(255,255,255,.08);
+    .aiMeta strong{
       color: var(--text);
-      min-height: 44px;
-      padding: 10px 12px;
-      outline:none;
-    }
-    .aiField input:focus-visible{
-      border-color: rgba(255,255,255,.55);
-      box-shadow: 0 0 0 4px rgba(99,102,241,.28);
+      font-weight: 700;
+      letter-spacing:.2px;
     }
     .aiResult{
       border-radius: 14px;
@@ -540,7 +534,7 @@
     @media (max-width: 860px){
       .topbar .row{ width:100%; justify-content:flex-start; }
       .dropdown{ flex:1 1 auto; }
-      .aiGrid{ grid-template-columns: 1fr; }
+      .aiMeta{ flex-direction:column; align-items:flex-start; }
       .dpadBtn{ min-height: 52px; }
     }
 
@@ -636,13 +630,9 @@
               <span class="aiStatus" id="aiStatus">待命</span>
             </div>
             <div class="aiGrid">
-              <div class="aiField">
-                <label for="aiKey">DeepSeek API Key</label>
-                <input id="aiKey" type="password" placeholder="sk-..." autocomplete="off" />
-              </div>
-              <div class="aiField">
-                <label for="aiModel">模型</label>
-                <input id="aiModel" type="text" value="deepseek-chat" />
+              <div class="aiMeta">
+                <span>模型</span>
+                <strong id="aiModel">deepseek-chat</strong>
               </div>
             </div>
             <div class="aiResult" aria-live="polite">
@@ -711,7 +701,6 @@
       leftBtn: document.getElementById("leftBtn"),
       rightBtn: document.getElementById("rightBtn"),
 
-      aiKey: document.getElementById("aiKey"),
       aiModel: document.getElementById("aiModel"),
       aiBtn: document.getElementById("aiBtn"),
       aiStatus: document.getElementById("aiStatus"),
@@ -947,13 +936,10 @@
       els.aiReason.textContent = `理由：${reason || "—"}`;
     }
 
+    const DEEPSEEK_API_KEY = "sk-2930ce6bb4c44d49a03dc2c7f564dfdf";
+
     async function fetchSuggestion(){
-      const apiKey = els.aiKey.value.trim();
-      if (!apiKey){
-        setAiStatus("请先填写 Key");
-        return;
-      }
-      const model = els.aiModel.value.trim() || "deepseek-chat";
+      const model = (els.aiModel?.textContent || "deepseek-chat").trim();
       setAiStatus("请求中…");
       els.aiBtn.disabled = true;
       try{
@@ -976,7 +962,7 @@
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${apiKey}`,
+            "Authorization": `Bearer ${DEEPSEEK_API_KEY}`,
           },
           body: JSON.stringify(payload)
         });
