@@ -136,8 +136,8 @@
       background: rgba(255,255,255,.08);
       color: var(--text);
       border-radius: 14px;
-      padding: 10px 12px;
-      min-height: 44px;
+      padding: 10px 14px;
+      min-height: 46px;
       outline:none;
       transition: transform .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease;
       -webkit-tap-highlight-color: transparent;
@@ -155,6 +155,12 @@
     .btn:focus-visible{
       border-color: rgba(255,255,255,.55);
       box-shadow: 0 0 0 4px rgba(99,102,241,.28);
+    }
+    .btn:disabled{
+      opacity:.6;
+      cursor:not-allowed;
+      box-shadow:none;
+      transform:none;
     }
 
     /* =========================
@@ -435,7 +441,7 @@
       display:flex;
       align-items:center;
       justify-content:center;
-      min-height: 54px;
+      min-height: 56px;
       border-radius: 16px;
       border: 1px solid rgba(255,255,255,.20);
       background: rgba(255,255,255,.08);
@@ -466,6 +472,72 @@
       line-height:1.45;
     }
 
+    .aiPanel{
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+    }
+    .aiHeader{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+    }
+    .aiTitle{
+      margin:0;
+      font-size: 14px;
+      letter-spacing:.2px;
+    }
+    .aiStatus{
+      font-size: 12px;
+      color: var(--sub);
+    }
+    .aiGrid{
+      display:grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 10px;
+    }
+    .aiMeta{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.08);
+      font-size: 12.5px;
+      color: var(--sub);
+    }
+    .aiMeta strong{
+      color: var(--text);
+      font-weight: 700;
+      letter-spacing:.2px;
+    }
+    .aiResult{
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.08);
+      padding: 12px;
+      display:grid;
+      gap: 6px;
+    }
+    .aiResult strong{
+      font-size: 16px;
+      letter-spacing:.2px;
+    }
+    .aiReason{
+      font-size: 12.5px;
+      color: var(--sub);
+    }
+
+    @media (max-width: 860px){
+      .topbar .row{ width:100%; justify-content:flex-start; }
+      .dropdown{ flex:1 1 auto; }
+      .aiMeta{ flex-direction:column; align-items:flex-start; }
+      .dpadBtn{ min-height: 52px; }
+    }
+
     @media (prefers-reduced-motion: reduce){
       .tile, .btn, .dpadBtn, .ddBtn { transition:none !important; }
       .tile.pop{ animation:none !important; }
@@ -479,7 +551,7 @@
       <div class="topbar">
         <div>
           <h1 class="title">2048</h1>
-          <p class="sub">键盘方向键/WASD 或右侧方向按钮操作；支持 4×4 / 5×5 / 6×6。</p>
+          <p class="sub">方向键/WASD 或右侧按钮操作。</p>
         </div>
         <div class="row">
           <!-- 自绘下拉：替代原生 select，展开风格一致 -->
@@ -542,10 +614,6 @@
               </div>
             </div>
           </div>
-
-          <div class="help">
-             
-          </div>
         </div>
 
         <div class="panel rightWrap">
@@ -554,6 +622,24 @@
               <b>目标</b>
               <span id="targetText">2048</span>
             </div>
+          </div>
+
+          <div class="aiPanel">
+            <div class="aiHeader">
+              <h3 class="aiTitle">AI 提示</h3>
+              <span class="aiStatus" id="aiStatus">待命</span>
+            </div>
+            <div class="aiGrid">
+              <div class="aiMeta">
+                <span>模型</span>
+                <strong id="aiModel">deepseek-chat</strong>
+              </div>
+            </div>
+            <div class="aiResult" aria-live="polite">
+              <strong id="aiMove">下一步：—</strong>
+              <div class="aiReason" id="aiReason">理由：—</div>
+            </div>
+            <button class="btn" id="aiBtn" type="button">获取建议</button>
           </div>
 
           <div class="dpad" aria-label="方向控制">
@@ -576,16 +662,6 @@
               <svg viewBox="0 0 24 24"><path d="M12 19l-7-7"></path><path d="M12 19l7-7"></path><path d="M12 5v14"></path></svg>
             </button>
             <div class="spacer"> </div>
-          </div>
-
-          <div class="row">
-            <button class="btn" id="hintBtn" style="width:100%;" type="button">操作说明</button>
-          </div>
-
-          <div class="help" id="helpText">
-            <b>键盘：</b>方向键 或 WASD。<br/>
-            <b>合并规则：</b>同一移动中每个格子只参与一次合并。<br/>
-            <b>胜利：</b>出现 ≥ 2048 的数字（继续也可玩）。
           </div>
         </div>
       </div>
@@ -625,8 +701,11 @@
       leftBtn: document.getElementById("leftBtn"),
       rightBtn: document.getElementById("rightBtn"),
 
-      hintBtn: document.getElementById("hintBtn"),
-      helpText: document.getElementById("helpText"),
+      aiModel: document.getElementById("aiModel"),
+      aiBtn: document.getElementById("aiBtn"),
+      aiStatus: document.getElementById("aiStatus"),
+      aiMove: document.getElementById("aiMove"),
+      aiReason: document.getElementById("aiReason"),
     };
 
     let size = 4;
@@ -847,6 +926,73 @@
       els.targetText.textContent = String(TARGET);
     }
 
+    function formatBoard(){
+      return board.map(row => row.map(v => String(v).padStart(4, " ")).join(" ")).join("\n");
+    }
+
+    function setAiStatus(text){ els.aiStatus.textContent = text; }
+    function setAiResult(move, reason){
+      els.aiMove.textContent = `下一步：${move || "—"}`;
+      els.aiReason.textContent = `理由：${reason || "—"}`;
+    }
+
+    const DEEPSEEK_API_KEY = "sk-2930ce6bb4c44d49a03dc2c7f564dfdf";
+
+    async function fetchSuggestion(){
+      const model = (els.aiModel?.textContent || "deepseek-chat").trim();
+      setAiStatus("请求中…");
+      els.aiBtn.disabled = true;
+      try{
+        const payload = {
+          model,
+          messages: [
+            {
+              role: "system",
+              content: "你是2048助手，只回答JSON。字段：move（up/down/left/right），reason（不超过20字）。"
+            },
+            {
+              role: "user",
+              content: `棋盘大小:${size}。得分:${score}。棋盘(每行):\n${formatBoard()}\n请给出下一步操作与理由。`
+            }
+          ],
+          temperature: 0.2
+        };
+
+        const resp = await fetch("https://api.deepseek.com/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${DEEPSEEK_API_KEY}`,
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!resp.ok){
+          throw new Error(`HTTP ${resp.status}`);
+        }
+        const data = await resp.json();
+        const content = data?.choices?.[0]?.message?.content || "";
+        let move = "";
+        let reason = "";
+        try{
+          const parsed = JSON.parse(content);
+          move = parsed.move || "";
+          reason = parsed.reason || "";
+        } catch (e){
+          const matchMove = content.match(/(up|down|left|right)/i);
+          move = matchMove ? matchMove[1].toLowerCase() : "";
+          reason = content.replace(/[\s\S]*reason[:：]?\s*/i, "").trim();
+        }
+        setAiResult(move, reason.slice(0, 20));
+        setAiStatus("完成");
+      } catch (err){
+        console.error(err);
+        setAiStatus("请求失败");
+      } finally {
+        els.aiBtn.disabled = false;
+      }
+    }
+
     // =========================
     // 覆盖层提示
     // =========================
@@ -980,11 +1126,7 @@
     els.keepBtn.addEventListener("click", hideOverlay);
     els.retryBtn.addEventListener("click", initGame);
 
-    els.hintBtn.addEventListener("click", () => {
-      showOverlay(" ",
-        " "
-      );
-    });
+    els.aiBtn.addEventListener("click", fetchSuggestion);
 
     window.addEventListener("keydown", onKeyDown, { passive: false });
     window.addEventListener("resize", () => requestAnimationFrame(updateSizing));
