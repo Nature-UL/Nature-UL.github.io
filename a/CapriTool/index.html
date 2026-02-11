@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>test</title>
+  <title>CapriTool</title>
   <style>
     :root{
       --bg1:#0b1220;
@@ -31,7 +31,6 @@
       overflow-x:hidden;
     }
 
-    /* 让内容避开 iPhone 刘海区域 */
     .safe{
       min-height:100%;
       padding:
@@ -58,33 +57,18 @@
       justify-content:space-between;
       gap: 12px;
     }
+
     .title{
       font-size: clamp(18px, 2.2vw, 22px);
       letter-spacing:.2px;
       margin:0;
       line-height:1.2;
     }
-    .hint{
-      margin:0;
-      font-size: 12px;
-      color: var(--sub);
-      white-space:nowrap;
-      opacity:.95;
-    }
 
     .grid{
       display:grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: 1fr;
       gap: 14px;
-    }
-
-    /* 手机竖屏：单列 */
-    @media (max-width: 640px){
-      .grid{
-        grid-template-columns: 1fr;
-        gap: 12px;
-      }
-      .hint{ display:none; }
     }
 
     .btn{
@@ -115,7 +99,6 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    /* 顶部高光 */
     .btn::before{
       content:"";
       position:absolute;
@@ -128,7 +111,6 @@
       transition: opacity .18s ease;
     }
 
-    /* 角落漂浮色块 */
     .blob{
       position:absolute;
       width: 140px;
@@ -136,7 +118,6 @@
       right:-60px;
       top:-60px;
       border-radius: 40px;
-      filter: blur(0px);
       opacity:.75;
       transform: rotate(18deg);
       transition: transform .25s ease, opacity .25s ease;
@@ -149,20 +130,10 @@
       background: linear-gradient(135deg, var(--card2), rgba(255,255,255,.07));
       box-shadow: 0 22px 60px rgba(0,0,0,.52);
     }
-    .btn:hover::before{ opacity: 1; }
-    .btn:hover .blob{
-      transform: rotate(24deg) scale(1.02);
-      opacity:.9;
-    }
 
     .btn:active{
       transform: translateY(0px) scale(.99);
       box-shadow: 0 16px 40px rgba(0,0,0,.42);
-    }
-
-    .btn:focus-visible{
-      border-color: rgba(255,255,255,.55);
-      box-shadow: 0 0 0 4px rgba(99,102,241,.28), var(--shadow);
     }
 
     .left{
@@ -219,7 +190,6 @@
       border: 1px solid rgba(255,255,255,.18);
     }
 
-    /* 小图标（纯 CSS） */
     .arrow svg{
       width: 18px;
       height: 18px;
@@ -230,52 +200,32 @@
       stroke-linejoin: round;
     }
 
-    footer{
-      margin-top: 6px;
-      padding: 0 4px;
-      color: rgba(255,255,255,.55);
-      font-size: 12px;
-      display:flex;
-      justify-content:space-between;
-      gap: 12px;
-      flex-wrap:wrap;
-    }
-
-    /* 低动效偏好 */
     @media (prefers-reduced-motion: reduce){
       .btn, .btn::before, .blob{ transition:none !important; }
     }
   </style>
 </head>
-
 <body>
   <div class="safe">
     <div class="panel">
       <div class="header">
-        <p class="hint"></p>
-       
+        <h1 class="title">CapriTool</h1>
       </div>
 
       <div class="grid" id="grid"></div>
-
-      <footer>
-        <span></span>
-        <span id="status"></span>
-      </footer>
     </div>
   </div>
 
   <script>
-    // ======== 在这里替换为你自己的四个链接 ========
     const links = [
-      { label: "2048", desc: "", url: "a/tzfe.html", tag: "A" , color: "linear-gradient(135deg, rgba(99,102,241,.85), rgba(34,211,238,.55))"},
-      { label: "Tetris", desc: "", url: "a/tetris.html", tag: "B" , color: "linear-gradient(135deg, rgba(16,185,129,.75), rgba(34,211,238,.40))"},
-      { label: "PPT", desc: "模版", url: "a/ppt/ppt.html", tag: "C" , color: "linear-gradient(135deg, rgba(244,63,94,.75), rgba(251,146,60,.55))"},
-      { label: "CapriTool", desc: "工具集合", url: "a/CapriTool/index.html", tag: "D" , color: "linear-gradient(135deg, rgba(168,85,247,.75), rgba(99,102,241,.45))"},
+      { label: "模块 1", desc: "待添加内容", url: "#", tag: "A", color: "linear-gradient(135deg, rgba(99,102,241,.85), rgba(34,211,238,.55))" },
+      { label: "模块 2", desc: "待添加内容", url: "#", tag: "B", color: "linear-gradient(135deg, rgba(16,185,129,.75), rgba(34,211,238,.40))" },
+      { label: "模块 3", desc: "待添加内容", url: "#", tag: "C", color: "linear-gradient(135deg, rgba(244,63,94,.75), rgba(251,146,60,.55))" },
+      { label: "模块 4", desc: "待添加内容", url: "#", tag: "D", color: "linear-gradient(135deg, rgba(168,85,247,.75), rgba(99,102,241,.45))" },
+      { label: "模块 5", desc: "待添加内容", url: "#", tag: "E", color: "linear-gradient(135deg, rgba(250,204,21,.70), rgba(14,165,233,.50))" }
     ];
 
     const grid = document.getElementById("grid");
-    const status = document.getElementById("status");
 
     function iconArrow() {
       return `
@@ -284,6 +234,15 @@
           <path d="M9 7h8v8"></path>
         </svg>
       `;
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
     }
 
     function build() {
@@ -298,41 +257,22 @@
 
         const blob = document.createElement("div");
         blob.className = "blob";
-        blob.style.background = item.color || "linear-gradient(135deg, rgba(255,255,255,.25), rgba(255,255,255,.05))";
+        blob.style.background = item.color;
 
         a.innerHTML = `
           <div class="left">
-            <div class="label">${escapeHtml(item.label || "未命名")}</div>
-            <div class="desc">${escapeHtml(item.desc || "")}</div>
+            <div class="label">${escapeHtml(item.label)}</div>
+            <div class="desc">${escapeHtml(item.desc)}</div>
           </div>
           <div class="right">
-            <span class="pill">${escapeHtml(item.tag || "LINK")}</span>
+            <span class="pill">${escapeHtml(item.tag)}</span>
             <span class="arrow">${iconArrow()}</span>
           </div>
         `;
+
         a.appendChild(blob);
-
-        // 键盘可用性：Enter 已由 <a> 默认支持；这里补充 Space 触发
-        a.addEventListener("keydown", (e) => {
-          if (e.code === "Space") {
-            e.preventDefault();
-            a.click();
-          }
-        });
-
         grid.appendChild(a);
       });
-
-      
-    }
-
-    function escapeHtml(str) {
-      return String(str)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
     }
 
     build();
