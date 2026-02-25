@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>cap-brochure</title>
+  <style>
+    :root{
+      --bg1:#0b1220;
+      --bg2:#101b33;
+      --card: rgba(255,255,255,.10);
+      --card2: rgba(255,255,255,.14);
+      --stroke: rgba(255,255,255,.22);
+      --text: rgba(255,255,255,.92);
+      --sub: rgba(255,255,255,.70);
+      --shadow: 0 18px 50px rgba(0,0,0,.45);
+      --radius: 18px;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(1200px 800px at 20% 15%, rgba(99,102,241,.35), transparent 55%),
+        radial-gradient(900px 700px at 85% 25%, rgba(34,211,238,.22), transparent 60%),
+        radial-gradient(1000px 900px at 50% 95%, rgba(16,185,129,.18), transparent 55%),
+        linear-gradient(160deg, var(--bg1), var(--bg2));
+      overflow-x:hidden;
+    }
+
+    /* 让内容避开 iPhone 刘海区域 */
+    .safe{
+      min-height:100%;
+      padding:
+        calc(18px + env(safe-area-inset-top))
+        calc(18px + env(safe-area-inset-right))
+        calc(22px + env(safe-area-inset-bottom))
+        calc(18px + env(safe-area-inset-left));
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .panel{
+      width:min(980px, 100%);
+      display:flex;
+      flex-direction:column;
+      gap: 14px;
+    }
+
+    .header{
+      padding: 6px 4px 10px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+    }
+
+.page-logo{
+  position: fixed;
+  top: calc(12px + env(safe-area-inset-top));
+  left: calc(12px + env(safe-area-inset-left));
+  z-index: 9999;
+}
+.logo{
+  width: 400px;
+  height: 100px;
+  object-fit: contain;
+  display: block;
+}
+
+    .title{
+      font-size: clamp(18px, 2.2vw, 22px);
+      letter-spacing:.2px;
+      margin:0;
+      line-height:1.2;
+    }
+    .hint{
+      margin:0;
+      font-size: 12px;
+      color: var(--sub);
+      white-space:nowrap;
+      opacity:.95;
+    }
+
+    .grid{
+      display:flex;
+      flex-direction:column;
+      gap: 14px;
+      align-items: center;
+    }
+
+/* 手机竖屏：单列 */
+    @media (max-width: 640px){
+      .grid{ gap: 12px; align-items: stretch; }
+      .btn{ width: 100%; }
+      .hint{ display:none; }
+    }
+
+    .btn{
+      position:relative;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 14px;
+
+      padding: 18px 18px;
+      min-height: 86px;
+      width: 70%;
+      border-radius: var(--radius);
+      border: 1px solid var(--stroke);
+
+      background: linear-gradient(135deg, var(--card), rgba(255,255,255,.06));
+      box-shadow: var(--shadow);
+
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+
+      text-decoration:none;
+      color: var(--text);
+
+      transform: translateZ(0);
+      transition: transform .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease;
+      overflow:hidden;
+      outline:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* 顶部高光 */
+    .btn::before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background:
+        radial-gradient(700px 120px at 10% 0%, rgba(255,255,255,.18), transparent 60%),
+        radial-gradient(500px 220px at 100% 0%, rgba(255,255,255,.12), transparent 60%);
+      pointer-events:none;
+      opacity:.9;
+      transition: opacity .18s ease;
+    }
+
+    /* 角落漂浮色块 */
+    .blob{
+      position:absolute;
+      width: 140px;
+      height: 140px;
+      right:-60px;
+      top:-60px;
+      border-radius: 40px;
+      filter: blur(0px);
+      opacity:.75;
+      transform: rotate(18deg);
+      transition: transform .25s ease, opacity .25s ease;
+      pointer-events:none;
+    }
+
+    .btn:hover{
+      transform: translateY(-2px);
+      border-color: rgba(255,255,255,.34);
+      background: linear-gradient(135deg, var(--card2), rgba(255,255,255,.07));
+      box-shadow: 0 22px 60px rgba(0,0,0,.52);
+    }
+    .btn:hover::before{ opacity: 1; }
+    .btn:hover .blob{
+      transform: rotate(24deg) scale(1.02);
+      opacity:.9;
+    }
+
+    .btn:active{
+      transform: translateY(0px) scale(.99);
+      box-shadow: 0 16px 40px rgba(0,0,0,.42);
+    }
+
+    .btn:focus-visible{
+      border-color: rgba(255,255,255,.55);
+      box-shadow: 0 0 0 4px rgba(99,102,241,.28), var(--shadow);
+    }
+
+    .left{
+      display:flex;
+      flex-direction:column;
+      gap: 6px;
+      z-index:1;
+      min-width:0;
+    }
+
+    .label{
+      font-size: 16px;
+      font-weight: 650;
+      letter-spacing:.2px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .desc{
+      font-size: 12.5px;
+      color: var(--sub);
+      line-height:1.35;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .right{
+      z-index:1;
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      flex:0 0 auto;
+      opacity:.95;
+    }
+
+    .pill{
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.16);
+      color: rgba(255,255,255,.84);
+    }
+
+    .arrow{
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      display:grid;
+      place-items:center;
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.18);
+    }
+
+    /* 小图标（纯 CSS） */
+    .arrow svg{
+      width: 18px;
+      height: 18px;
+      fill: none;
+      stroke: rgba(255,255,255,.92);
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    footer{
+      margin-top: 6px;
+      padding: 0 4px;
+      color: rgba(255,255,255,.55);
+      font-size: 12px;
+      display:flex;
+      justify-content:space-between;
+      gap: 12px;
+      flex-wrap:wrap;
+    }
+
+    /* 低动效偏好 */
+    @media (prefers-reduced-motion: reduce){
+      .btn, .btn::before, .blob{ transition:none !important; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page-logo">
+    <!-- 把下面的地址替换成你的 logo 图片地址 -->
+    <img class="logo" src="logo.png" alt="Logo" />
+  </div>
+  <div class="safe">
+    <div class="panel">
+
+      <div class="grid" id="grid"></div>
+
+      <footer>
+        <span></span>
+        <span id="status"></span>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    // ======== 在这里替换为你自己的四个链接 ========
+    const links = [
+      { label: "凯普瑞产品项目册一", desc: "试剂 2025-01", url: "p1.pdf", tag: "A" , color: "linear-gradient(135deg, rgba(99,102,241,.85), rgba(34,211,238,.55))"},
+      { label: "凯普瑞产品项目册二", desc: "仪器 2025-01", url: "p2.pdf", tag: "B" , color: "linear-gradient(135deg, rgba(16,185,129,.75), rgba(34,211,238,.40))"},
+      { label: "N/A", desc: "……", url: "#", tag: "C" , color: "linear-gradient(135deg, rgba(244,63,94,.75), rgba(251,146,60,.55))"},
+      { label: "N/A", desc: "……", url: "#", tag: "D" , color: "linear-gradient(135deg, rgba(168,85,247,.75), rgba(99,102,241,.45))"},
+    ];
+
+    const grid = document.getElementById("grid");
+    const status = document.getElementById("status");
+
+    function iconArrow() {
+      return `
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M7 17L17 7"></path>
+          <path d="M9 7h8v8"></path>
+        </svg>
+      `;
+    }
+
+    function build() {
+      grid.innerHTML = "";
+      links.forEach((item, idx) => {
+        const a = document.createElement("a");
+        a.className = "btn";
+        a.href = item.url;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        a.setAttribute("data-index", String(idx));
+
+        const blob = document.createElement("div");
+        blob.className = "blob";
+        blob.style.background = item.color || "linear-gradient(135deg, rgba(255,255,255,.25), rgba(255,255,255,.05))";
+
+        a.innerHTML = `
+          <div class="left">
+            <div class="label">${escapeHtml(item.label || "未命名")}</div>
+            <div class="desc">${escapeHtml(item.desc || "")}</div>
+          </div>
+          <div class="right">
+            <span class="pill">${escapeHtml(item.tag || "LINK")}</span>
+            <span class="arrow">${iconArrow()}</span>
+          </div>
+        `;
+        a.appendChild(blob);
+
+        // 键盘可用性：Enter 已由 <a> 默认支持；这里补充 Space 触发
+        a.addEventListener("keydown", (e) => {
+          if (e.code === "Space") {
+            e.preventDefault();
+            a.click();
+          }
+        });
+
+        grid.appendChild(a);
+      });
+
+      
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    build();
+  </script>
+</body>
+</html>
