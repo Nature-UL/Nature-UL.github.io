@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>流式细胞仪</title>
+  <style>
+    :root{
+      --maxw: 980px;   /* 电脑上图片最大宽度（可调：860/980/1100） */
+      --pad: 14px;
+      --gap: 10px;
+    }
+
+    html, body { height: 100%; }
+    body{
+      margin: 0;
+      background: #f2f3f5;
+    }
+
+    /* 纵向顺序展示，无任何 UI */
+    .gallery{
+      display: flex;
+      flex-direction: column;
+      gap: var(--gap);
+      padding: var(--gap) var(--pad);
+      align-items: center;
+    }
+
+    .page{
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+
+    /* 手机：宽度优先（更好读） */
+    .page img{
+      width: 100%;
+      max-width: var(--maxw);
+      height: auto;
+      display: block;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 10px 26px rgba(0,0,0,.12);
+    }
+
+    /* 电脑横屏：高度优先 + 居中，一屏一张更舒服 */
+    @media (min-width: 900px){
+      body{
+        scroll-snap-type: y mandatory; /* 去掉这一行就关闭“吸附翻页” */
+      }
+      .page{
+        min-height: 100vh;
+        align-items: center;
+        scroll-snap-align: start;
+        padding: 8px 0;
+      }
+      .page img{
+        width: auto;
+        max-width: min(var(--maxw), calc(100vw - 2*var(--pad)));
+        max-height: calc(100vh - 2*var(--gap));
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="gallery">
+    <div class="page"><img src="img/01.webp" alt="" loading="lazy" decoding="async"></div>
+    <div class="page"><img src="img/02.webp" alt="" loading="lazy" decoding="async"></div>
+    <div class="page"><img src="img/03.webp" alt="" loading="lazy" decoding="async"></div>
+    <div class="page"><img src="img/04.webp" alt="" loading="lazy" decoding="async"></div>
+    <div class="page"><img src="img/05.webp" alt="" loading="lazy" decoding="async"></div>
+    <div class="page"><img src="img/06.webp" alt="" loading="lazy" decoding="async"></div>
+    <div class="page"><img src="img/07.webp" alt="" loading="lazy" decoding="async"></div>
+    <div class="page"><img src="img/08.webp" alt="" loading="lazy" decoding="async"></div>
+  </main>
+</body>
+</html>
