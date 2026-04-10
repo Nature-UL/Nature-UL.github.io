@@ -1,0 +1,741 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CapriTool 02-Commercial - 桌面协作表格工具</title>
+    <style>
+      :root {
+        --c1: #28e2e2;
+        --c2: #138e8e;
+        --c3: #061a1a;
+        --c4: #0b3131;
+        --text: #e9ffff;
+        --muted: rgba(233, 255, 255, 0.7);
+        --glow: 0 0 20px rgba(40, 226, 226, 0.35), 0 0 60px rgba(19, 142, 142, 0.3);
+        --grid: rgba(40, 226, 226, 0.08);
+        --pad-x: clamp(24px, 6vw, 90px);
+        --pad-y: clamp(28px, 8vh, 90px);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        background: var(--c3);
+        color: var(--text);
+        font-family: "Saira", "Space Grotesk", "IBM Plex Sans", sans-serif;
+      }
+
+      body {
+        overflow: hidden;
+      }
+
+      .bg {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        background:
+          radial-gradient(1100px 720px at 50% 10%, rgba(40, 226, 226, 0.18), transparent 62%),
+          radial-gradient(1100px 720px at 18% 38%, rgba(40, 226, 226, 0.14), transparent 64%),
+          radial-gradient(1200px 760px at 84% 52%, rgba(40, 226, 226, 0.13), transparent 66%),
+          radial-gradient(1000px 640px at 50% 88%, rgba(40, 226, 226, 0.09), transparent 70%),
+          linear-gradient(180deg, #061a1a, #0b2a2a);
+        overflow: hidden;
+      }
+
+      #bg-canvas {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        display: block;
+        pointer-events: none;
+        filter: saturate(1.2) hue-rotate(-10deg) brightness(1.05) contrast(1.08);
+      }
+
+      main {
+        position: relative;
+        z-index: 1;
+        height: 100vh;
+        overflow-y: auto;
+        scroll-snap-type: none;
+        scroll-behavior: smooth;
+      }
+
+      main::-webkit-scrollbar {
+        width: 0;
+        height: 0;
+      }
+
+      main {
+        scrollbar-width: none;
+      }
+
+      .slide {
+        position: relative;
+        min-height: 100vh;
+        padding: var(--pad-y) var(--pad-x);
+        scroll-snap-align: start;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: clamp(24px, 6vw, 80px);
+        isolation: isolate;
+        background: transparent;
+      }
+
+      .slide::before,
+      .slide::after {
+        content: none;
+      }
+
+      .content {
+        position: relative;
+        z-index: 1;
+        max-width: 620px;
+      }
+
+      .kicker {
+        text-transform: uppercase;
+        letter-spacing: 0.3em;
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+
+      h1,
+      h2 {
+        margin: 0.4rem 0 1rem;
+        line-height: 1.05;
+      }
+
+      h1 {
+        font-size: clamp(2.6rem, 4vw, 4.8rem);
+      }
+
+      h2 {
+        font-size: clamp(2rem, 3vw, 3.4rem);
+      }
+
+      p {
+        margin: 0 0 1rem;
+        font-size: clamp(1rem, 1.25vw, 1.3rem);
+        color: var(--muted);
+      }
+
+      .feature-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 18px;
+        margin-top: 1.2rem;
+      }
+
+      .card {
+        padding: 18px 20px;
+        border: 1px solid rgba(40, 226, 226, 0.3);
+        border-radius: 14px;
+        background: rgba(4, 20, 20, 0.65);
+        backdrop-filter: blur(8px);
+        box-shadow: var(--glow);
+      }
+
+      .cta-row {
+        margin-top: 16px;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .btn-primary {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 12px 22px;
+        border-radius: 999px;
+        border: 1px solid rgba(40, 226, 226, 0.7);
+        background: linear-gradient(90deg, var(--c1), var(--c2));
+        color: #022323;
+        font-weight: 700;
+        text-decoration: none;
+        box-shadow: var(--glow);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 0 24px rgba(40, 226, 226, 0.5);
+      }
+
+      .card h3 {
+        margin: 0 0 0.5rem;
+        font-size: 1.1rem;
+      }
+
+      .card p {
+        margin: 0;
+        font-size: 0.95rem;
+      }
+
+      .visual {
+        position: relative;
+        z-index: 1;
+        flex: 1;
+        min-height: 320px;
+        max-width: 520px;
+        display: grid;
+        place-items: center;
+      }
+
+      .panel {
+        width: 100%;
+        padding: 28px;
+        border-radius: 22px;
+        border: 1px solid rgba(40, 226, 226, 0.4);
+        background: linear-gradient(135deg, rgba(19, 142, 142, 0.25), rgba(6, 26, 26, 0.7));
+        box-shadow: 0 0 35px rgba(40, 226, 226, 0.2);
+      }
+
+      .panel-grid {
+        display: grid;
+        gap: 14px;
+      }
+
+      .panel-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: center;
+        padding: 10px 14px;
+        border-radius: 12px;
+        background: rgba(6, 20, 20, 0.6);
+        border: 1px solid rgba(40, 226, 226, 0.2);
+      }
+
+      .chip {
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        color: #032;
+        background: linear-gradient(90deg, var(--c1), var(--c2));
+      }
+
+      .logo-only {
+        width: clamp(380px, 52vw, 980px);
+        height: auto;
+        filter:
+          drop-shadow(0 0 22px rgba(40, 226, 226, 0.7))
+          drop-shadow(0 0 60px rgba(19, 142, 142, 0.45));
+      }
+
+      .slide-hero {
+        justify-content: center;
+      }
+
+      .slide-hero .content {
+        display: none;
+      }
+
+      .slide-hero .visual {
+        max-width: none;
+        width: 100%;
+        height: 100%;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .logo-wrap {
+        transform: translateY(-36px);
+      }
+
+      .ai-note {
+        position: absolute;
+        left: 50%;
+        bottom: -270px;
+        transform: translateX(-50%);
+        font-size: 0.9rem;
+        color: rgba(233, 255, 255, 0.6);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        text-align: center;
+      }
+
+      nav.dots {
+        position: fixed;
+        right: clamp(16px, 3vw, 40px);
+        top: 50%;
+        transform: translateY(-50%);
+        display: grid;
+        gap: 12px;
+        z-index: 10;
+      }
+
+      .dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        border: 1px solid rgba(40, 226, 226, 0.5);
+        background: rgba(4, 20, 20, 0.7);
+        box-shadow: var(--glow);
+        transition: transform 0.3s ease, background 0.3s ease;
+      }
+
+      .dot.is-active {
+        transform: scale(1.4);
+        background: linear-gradient(120deg, var(--c1), var(--c2));
+      }
+
+      .slide-index {
+        position: absolute;
+        left: var(--pad-x);
+        bottom: 26px;
+        font-size: 0.9rem;
+        color: var(--muted);
+      }
+
+      [data-animate] {
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.7s ease, transform 0.7s ease;
+      }
+
+      .is-active [data-animate] {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .is-active [data-animate="delay-1"] {
+        transition-delay: 0.1s;
+      }
+
+      .is-active [data-animate="delay-2"] {
+        transition-delay: 0.25s;
+      }
+
+      .is-active [data-animate="delay-3"] {
+        transition-delay: 0.4s;
+      }
+
+
+      @media (max-width: 900px) {
+        .slide {
+          flex-direction: column;
+          justify-content: center;
+        }
+
+        .visual {
+          width: 100%;
+        }
+
+        nav.dots {
+          right: 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="bg" aria-hidden="true">
+      <canvas id="bg-canvas"></canvas>
+    </div>
+
+    <nav class="dots" aria-label="页面导航">
+      <a class="dot is-active" href="#slide-1" aria-label="第 1 页"></a>
+      <a class="dot" href="#slide-2" aria-label="第 2 页"></a>
+      <a class="dot" href="#slide-3" aria-label="第 3 页"></a>
+      <a class="dot" href="#slide-4" aria-label="第 4 页"></a>
+      <a class="dot" href="#slide-5" aria-label="第 5 页"></a>
+      <a class="dot" href="#slide-6" aria-label="第 6 页"></a>
+    </nav>
+
+    <main id="scroll-root">
+      <section id="slide-1" class="slide slide-hero is-active">
+        <div class="visual">
+          <div class="logo-wrap">
+            <img class="logo-only" src="assets/logos/caprico.ico" alt="CapriTool 02 标志" />
+          </div>
+          <div class="ai-note">CapriTool 02-Commercial</div>
+        </div>
+      </section>
+
+      <section id="slide-2" class="slide">
+        <div class="content">
+          <div class="kicker" data-animate="delay-1">CapriTool 02</div>
+          <h1 data-animate="delay-2">面向商业与技术团队的桌面协作表格系统</h1>
+          <p data-animate="delay-3">
+            统一管理 Catalog、Price、Criteria、Order、Disq 五大业务表。
+            登录后按角色加载权限，直接编辑或提交审核，所有数据以 OSS 为唯一运行数据源。
+          </p>
+          <div class="feature-list">
+            <div class="card" data-animate="delay-2">
+              <h3>桌面原生体验</h3>
+              <p>PySide6 自绘窗口，支持拖拽、缩放、主题切换。</p>
+            </div>
+            <div class="card" data-animate="delay-3">
+              <h3>多表协同</h3>
+              <p>表间关联计算，订单联动目录、价格、标准规则。</p>
+            </div>
+          </div>
+          <div class="cta-row" data-animate="delay-3">
+            <a class="btn-primary" href="#" role="button">CapriTool 02-Commercial</a>
+          </div>
+        </div>
+        <div class="visual">
+          <div class="panel">
+            <div class="panel-grid">
+              <div class="panel-row">
+                <span>数据源</span>
+                <span class="chip">OSS</span>
+              </div>
+              <div class="panel-row">
+                <span>模块</span>
+                <span class="chip">5 张主表</span>
+              </div>
+              <div class="panel-row">
+                <span>入口</span>
+                <span class="chip">登录即用</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="slide-index">01 / 05</div>
+      </section>
+
+      <section id="slide-3" class="slide">
+        <div class="content">
+          <div class="kicker" data-animate="delay-1">权限模型</div>
+          <h2 data-animate="delay-2">同一张表，管理员直改，成员提交审核</h2>
+          <p data-animate="delay-3">
+            角色权限来自 users/roles.json。支持 direct 与 submit_for_review 两种模式，
+            并按 direct_edit.columns 精确到列级编辑范围。
+          </p>
+          <div class="feature-list">
+            <div class="card" data-animate="delay-2">
+              <h3>业务管理员</h3>
+              <p>订单表可直接编辑 A-J、P 列并保存生效。</p>
+            </div>
+            <div class="card" data-animate="delay-3">
+              <h3>业务成员</h3>
+              <p>订单表编辑 A-J、P 列后提交审核，不直接落库。</p>
+            </div>
+          </div>
+        </div>
+        <div class="visual">
+          <div class="panel">
+            <div class="panel-grid">
+              <div class="panel-row">
+                <span>模式</span>
+                <span class="chip">direct</span>
+              </div>
+              <div class="panel-row">
+                <span>模式</span>
+                <span class="chip">submit_for_review</span>
+              </div>
+              <div class="panel-row">
+                <span>粒度</span>
+                <span class="chip">列级权限</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="slide-index">02 / 05</div>
+      </section>
+
+      <section id="slide-4" class="slide">
+        <div class="content">
+          <div class="kicker" data-animate="delay-1">编辑能力</div>
+          <h2 data-animate="delay-2">单元格编辑、样式、筛选、链接联动一体化</h2>
+          <p data-animate="delay-3">
+            支持增删行、合并拆分、底纹、粗体/斜体、复制粘贴、筛选、评论等。
+            订单表可通过 Link 动作执行跨表自动回填与计算。
+          </p>
+          <div class="feature-list">
+            <div class="card" data-animate="delay-2">
+              <h3>Order 联动</h3>
+              <p>自动关联 Catalog / Price / Criteria 结果。</p>
+            </div>
+            <div class="card" data-animate="delay-3">
+              <h3>可撤销操作</h3>
+              <p>Undo / Redo 支持高频编辑场景。</p>
+            </div>
+          </div>
+        </div>
+        <div class="visual">
+          <div class="panel">
+            <div class="panel-grid">
+              <div class="panel-row">
+                <span>编辑器</span>
+                <span class="chip">筛选/合并/底纹</span>
+              </div>
+              <div class="panel-row">
+                <span>快捷键</span>
+                <span class="chip">复制/粘贴/删除</span>
+              </div>
+              <div class="panel-row">
+                <span>联动</span>
+                <span class="chip">Link</span>
+              </div>
+              <div class="panel-row">
+                <span>评论</span>
+                <span class="chip">按表留言</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="slide-index">03 / 05</div>
+      </section>
+
+      <section id="slide-5" class="slide">
+        <div class="content">
+          <div class="kicker" data-animate="delay-1">审核流</div>
+          <h2 data-animate="delay-2">Criteria / Order 待审池与单元格级审批</h2>
+          <p data-animate="delay-3">
+            审核申请写入 review JSON。管理员在表格中直接看到待审高亮，
+            双击可展开申请列表并逐条通过或驳回。
+          </p>
+          <div class="feature-list">
+            <div class="card" data-animate="delay-2">
+              <h3>高亮规则</h3>
+              <p>新增绿、删除红、修改黄。</p>
+            </div>
+            <div class="card" data-animate="delay-3">
+              <h3>审批动作</h3>
+              <p>√ 应用变更，× 驳回，手工改单元格使该格申请失效。</p>
+            </div>
+          </div>
+        </div>
+        <div class="visual">
+          <div class="panel">
+            <div class="panel-grid">
+              <div class="panel-row">
+                <span>待审池</span>
+                <span class="chip">review-order.json</span>
+              </div>
+              <div class="panel-row">
+                <span>待审池</span>
+                <span class="chip">review-criteria.json</span>
+              </div>
+              <div class="panel-row">
+                <span>状态</span>
+                <span class="chip">pending / approved</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="slide-index">04 / 05</div>
+      </section>
+
+      <section id="slide-6" class="slide">
+        <div class="content">
+          <div class="kicker" data-animate="delay-1">体验与配置</div>
+          <h2 data-animate="delay-2">多语言、多主题、可持久化的个人设置</h2>
+          <p data-animate="delay-3">
+            支持 zh/en/ja/ru/fr/es 六语，支持日间/夜间主题与字号配置。
+            用户设置同步到 OSS，跨设备保持一致。
+          </p>
+          <div class="feature-list">
+            <div class="card" data-animate="delay-2">
+              <h3>无边框窗口</h3>
+              <p>拖拽、缩放、最大化形态一致。</p>
+            </div>
+            <div class="card" data-animate="delay-3">
+              <h3>设置持久化</h3>
+              <p>语言与表格字号保存至 users/users.json。</p>
+            </div>
+          </div>
+        </div>
+        <div class="visual">
+          <div class="panel">
+            <div class="panel-grid">
+              <div class="panel-row">
+                <span>语言</span>
+                <span class="chip">6 locales</span>
+              </div>
+              <div class="panel-row">
+                <span>主题</span>
+                <span class="chip">Light / Dark</span>
+              </div>
+              <div class="panel-row">
+                <span>设置</span>
+                <span class="chip">OSS 同步</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="slide-index">05 / 05</div>
+      </section>
+    </main>
+
+    <script>
+      const slides = Array.from(document.querySelectorAll(".slide"));
+      const dots = Array.from(document.querySelectorAll(".dot"));
+      const scroller = document.getElementById("scroll-root");
+      let curSlide = 0;
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              slides.forEach((slide) => slide.classList.remove("is-active"));
+              entry.target.classList.add("is-active");
+              const index = slides.indexOf(entry.target);
+              if (index >= 0) {
+                curSlide = index;
+                dots.forEach((dot, i) => dot.classList.toggle("is-active", i === index));
+              }
+            }
+          });
+        },
+        { root: scroller, threshold: 0.6 }
+      );
+
+      slides.forEach((slide) => observer.observe(slide));
+
+      const goSlide = (idx, behavior = "smooth") => {
+        const target = slides[Math.max(0, Math.min(idx, slides.length - 1))];
+        if (target) {
+          target.scrollIntoView({ behavior, block: "start" });
+        }
+      };
+
+      dots.forEach((dot) => {
+        dot.addEventListener("click", (event) => {
+          event.preventDefault();
+          const target = document.querySelector(dot.getAttribute("href"));
+          if (target) {
+            target.scrollIntoView({ behavior: "smooth" });
+          }
+        });
+      });
+
+      let wheelLock = false;
+      scroller.addEventListener(
+        "wheel",
+        (event) => {
+          if (Math.abs(event.deltaY) < 18) return;
+          event.preventDefault();
+          if (wheelLock) return;
+          wheelLock = true;
+          if (event.deltaY > 0) goSlide(curSlide + 1);
+          else goSlide(curSlide - 1);
+          setTimeout(() => {
+            wheelLock = false;
+          }, 680);
+        },
+        { passive: false }
+      );
+
+      window.addEventListener("keydown", (event) => {
+        const key = event.key.toLowerCase();
+        if (key === "arrowdown" || key === "pagedown" || key === " ") {
+          event.preventDefault();
+          goSlide(curSlide + 1);
+        }
+        if (key === "arrowup" || key === "pageup") {
+          event.preventDefault();
+          goSlide(curSlide - 1);
+        }
+        if (key === "f") {
+          event.preventDefault();
+          if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(() => {});
+          } else {
+            document.exitFullscreen().catch(() => {});
+          }
+        }
+      });
+
+      const canvas = document.getElementById("bg-canvas");
+      const ctx = canvas.getContext("2d", { alpha: true });
+      const bgHost = document.querySelector(".bg");
+      const state = { w: 0, h: 0, points: [], mouse: { x: 0, y: 0 } };
+
+      const resize = () => {
+        const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+        state.w = bgHost.clientWidth;
+        state.h = bgHost.clientHeight;
+        canvas.width = Math.floor(state.w * dpr);
+        canvas.height = Math.floor(state.h * dpr);
+        canvas.style.width = `${state.w}px`;
+        canvas.style.height = `${state.h}px`;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        const count = Math.floor((state.w * state.h) / 36000);
+        const n = Math.max(28, Math.min(70, count));
+        state.points = new Array(n).fill(0).map(() => ({
+          x: Math.random() * state.w,
+          y: Math.random() * state.h,
+          vx: (Math.random() - 0.5) * 0.28,
+          vy: (Math.random() - 0.5) * 0.28,
+          r: 1 + Math.random() * 1.8,
+        }));
+      };
+
+      const draw = () => {
+        ctx.clearRect(0, 0, state.w, state.h);
+
+        for (const p of state.points) {
+          p.x += p.vx;
+          p.y += p.vy;
+
+          const mx = (state.mouse.x - state.w / 2) * 0.00006;
+          const my = (state.mouse.y - state.h / 2) * 0.00006;
+          p.x += mx * 24;
+          p.y += my * 24;
+
+          if (p.x < -40) p.x = state.w + 40;
+          if (p.x > state.w + 40) p.x = -40;
+          if (p.y < -40) p.y = state.h + 40;
+          if (p.y > state.h + 40) p.y = -40;
+        }
+
+        for (let i = 0; i < state.points.length; i++) {
+          const a = state.points[i];
+          for (let j = i + 1; j < state.points.length; j++) {
+            const b = state.points[j];
+            const dx = a.x - b.x;
+            const dy = a.y - b.y;
+            const d2 = dx * dx + dy * dy;
+            const max = 190;
+            if (d2 < max * max) {
+              const alpha = 1 - Math.sqrt(d2) / max;
+              ctx.strokeStyle = `rgba(40, 226, 226, ${alpha * 0.12})`;
+              ctx.lineWidth = 1;
+              ctx.beginPath();
+              ctx.moveTo(a.x, a.y);
+              ctx.lineTo(b.x, b.y);
+              ctx.stroke();
+            }
+          }
+        }
+
+        for (const p of state.points) {
+          ctx.fillStyle = "rgba(255, 255, 255, 0.22)";
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        requestAnimationFrame(draw);
+      };
+
+      window.addEventListener("resize", resize);
+      window.addEventListener(
+        "pointermove",
+        (event) => {
+          state.mouse.x = event.clientX;
+          state.mouse.y = event.clientY;
+        },
+        { passive: true }
+      );
+
+      resize();
+      requestAnimationFrame(draw);
+    </script>
+  </body>
+</html>
